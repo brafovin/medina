@@ -16,8 +16,13 @@
   #blk{position:fixed;inset:0;background:#000;z-index:30;opacity:0;pointer-events:none;transition:opacity .45s;display:grid;place-items:center;color:#fca5a5;font-style:italic;padding:20px;text-align:center}
   #blk.on{opacity:1;pointer-events:auto}
   #jump{position:fixed;inset:0;z-index:25;display:none;place-items:center;background:radial-gradient(circle at 50% 40%,#a32222,#220508 60%,#000)}
-  #jump svg{height:86vh;animation:jj .09s infinite}
-  @keyframes jj{0%,100%{transform:translate(0)}50%{transform:translate(6px,-4px) scale(1.04)}}
+  #jump{overflow:hidden}
+  #jump svg{height:100vh;max-width:100vw;filter:contrast(1.35) grayscale(.35);animation:zoom var(--jd,.9s) cubic-bezier(.1,.8,.2,1) forwards,jj .06s infinite}
+  @keyframes zoom{0%{transform:scale(.18);opacity:.1}10%{transform:scale(.9);opacity:1}100%{transform:scale(1.9)}}
+  @keyframes jj{0%,100%{translate:0 0}50%{translate:9px -6px}}
+  #flash{position:fixed;inset:0;background:#fff;opacity:0;z-index:26;pointer-events:none}
+  #flash.go{animation:fl .5s}
+  @keyframes fl{0%{opacity:.95}20%{opacity:0}35%{opacity:.7;background:#c00}100%{opacity:0}}
   #hud{position:fixed;left:0;right:0;top:0;z-index:5;display:flex;justify-content:space-between;align-items:flex-start;padding:10px 12px;pointer-events:none;text-shadow:0 1px 4px #000}
   #inv{display:flex;gap:6px;align-items:center;flex-wrap:wrap;pointer-events:auto}
   .slot{position:relative;width:40px;height:40px;border-radius:8px;border:1px solid #3a3450;background:rgba(10,8,16,.7);font-size:21px;display:grid;place-items:center;padding:0}
@@ -64,6 +69,7 @@
   .dg div{width:52px;height:60px;display:grid;place-items:center;font:700 34px ui-monospace,monospace;background:#000;border-radius:8px;border:1px solid #433c5c;color:var(--gold)}
   .err{color:var(--red);min-height:1.4em;text-align:center}
   .dim{color:var(--dim);font-size:14px}
+  .opt{display:inline-flex;gap:8px;align-items:center;margin:6px 0;font:14px system-ui,sans-serif;color:#fca5a5;cursor:pointer}
   .keys{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;text-align:left;font-size:14px;margin:12px auto;max-width:360px}
   .keys b{font:700 12px ui-monospace,monospace;background:#2a2638;border:1px solid #433c5c;border-radius:5px;padding:1px 6px;justify-self:end}
   a{color:#94a3b8;font:14px system-ui,sans-serif}
@@ -93,7 +99,7 @@
 <div id="bars"><div class="lbl">🔦</div><div class="bar" id="bBatW"><i id="bBat"></i></div><div class="lbl">🏃</div><div class="bar st"><i id="bSta"></i></div></div>
 <div id="cross"></div><div id="prompt"></div><div id="sub"></div>
 <div id="touch"><div id="stick"><div id="knob"></div></div><button class="tb" id="tE">E</button><button class="tb" id="tF">🔦</button><button class="tb" id="tR">🏃</button></div>
-<div id="jump"></div>
+<div id="jump"></div><div id="flash"></div>
 <div id="blk"></div>
 <div id="pause" class="hidden">Pausiert – klicke, um weiterzuspielen</div>
 <div id="modal" class="hidden"><div class="box" id="mbox"></div></div>
@@ -114,6 +120,7 @@
     <p class="dim">Am Handy: Stick links zum Laufen, rechts wischen zum Umsehen, Knöpfe für E / Licht / Rennen.</p>
     <p class="dim">🎧 Mit Kopfhörern am gruseligsten. Enthält Schreckmomente und flackernde Bilder. 8 verschiedene Enden.</p>
     <p class="dim" id="found"></p>
+    <label class="opt"><input type="checkbox" id="scOpt" checked> Jumpscares an (laut &amp; plötzlich!)</label><br>
     <button class="btn" id="startBtn">Betreten</button><br>
     <a href="haus.html">← 2D-Version</a>
   </div>
@@ -199,13 +206,15 @@
     knock: () => [0, .35, .7].forEach(d => { snd(110, .1, 'square', .12, -40, d); noise(.1, 300, 1, .2, d); }),
     whisper: () => { noise(.5, 1800, 5, .06); noise(.4, 2600, 7, .05, .35); noise(.6, 1500, 4, .05, .7); },
     caught: () => { noise(1.2, 200, .4, .35); snd(45, 1.6, 'sawtooth', .2, -15); },
+    sting: () => { noise(1.1, 900, .7, .55); noise(.8, 2400, 1.5, .45, .02); snd(900, .9, 'sawtooth', .22, -700); snd(1350, .8, 'square', .1, -1000); snd(1900, .5, 'sawtooth', .08, -1500, .05); snd(55, 1.4, 'sawtooth', .3, -25); },
+    slam: () => { noise(.35, 150, .5, .6); snd(70, .4, 'square', .35, -40); },
     gstep: v => snd(60, .2, 'sine', .22 * v, -22),
     music: () => [523, 587, 659, 523, 659, 587, 523].forEach((f, i) => snd(f, .3, 'triangle', .03, 0, i * .35))
   };
   function beatLoop() {
     clearTimeout(beatTimer);
     if (!S || S.over) return;
-    if (fearV > .25 && !isPaused()) { const v = .06 + fearV * .2; snd(58, .14, 'sine', v, -25); snd(48, .12, 'sine', v * .8, -20, .17); }
+    if (fearV > .25 && !isPaused() && performance.now() >= silenceUntil) { const v = .06 + fearV * .2; snd(58, .14, 'sine', v, -25); snd(48, .12, 'sine', v * .8, -20, .17); }
     beatTimer = setTimeout(beatLoop, 1300 - fearV * 850);
   }
   $('mute').onclick = e => { e.stopPropagation(); toggleMute(); };
@@ -474,7 +483,7 @@
     FL.phoneRing = false;
     ia(t, 'Telefon', () => {
       if (S.T < 540) say('Ein altes Wählscheibentelefon. Die Leitung ist tot – kein Ton.');
-      else if (!S.flags.phone) { S.flags.phone = 1; FL.phoneRing = false; say('Du hebst ab. Rauschen, dann eine Kinderstimme, ganz leise: <i>„… hörst du mich? Such weiter oben … ich warte … unterm Dach …“</i> Klick. Die Leitung ist wieder tot.', 'scary'); sfx.scare(); }
+      else if (!S.flags.phone) { S.flags.phone = 1; FL.phoneRing = false; say('Du hebst ab. Rauschen, dann eine Kinderstimme, ganz leise: <i>„… hörst du mich? Such weiter oben … ich warte … unterm Dach …“</i> Klick. Die Leitung ist wieder tot.', 'scary'); sfx.scare(); setTimeout(() => { if (S && !S.over && roomOf(P.x, P.z) === 'flur') scareBehind(); }, 4500); }
       else say('Nur noch Rauschen.');
     });
     const c = grp(-2.2, 0, 1.25); box(1.6, .06, .08, M.dwood, 0, 1.8, .1, c); for (let i = 0; i < 4; i++) box(.3, 1.2, .2, Lm(pick([0x2a2a35, 0x4a3a2a, 0x2a3a35])), -.6 + i * .4, .5, 0, c);
@@ -537,7 +546,7 @@
       mg.strokeStyle = '#3a2a1a'; mg.lineWidth = 8; mg.strokeRect(4, 4, 120, 152); };
     BA.draw(0); BA.tex = new THREE.CanvasTexture(mc);
     BA.mirror = plane(.9, 1.1, new THREE.MeshBasicMaterial({ map: BA.tex, color: 0x99a0aa, fog: true }), 6.2, 1.7, -4.88);
-    ia(BA.mirror, 'Spiegel', () => say(S.ver.bad === 0 ? 'Dein Gesicht im staubigen Spiegel: blass, müde. Du wischst mit dem Ärmel – dahinter bist nur du. Noch.' : S.ver.bad === 1 ? 'In Kinderschrift steht auf dem beschlagenen Glas: <i>HINTER DIR</i>. Du drehst dich um. Nichts. Als du zurückblickst, ist die Schrift verwischt.' : 'Auf dem Glas steht: <i>KOMM HOCH</i>. Darunter malt jemand mit dem Finger einen kleinen Kreis.'));
+    ia(BA.mirror, 'Spiegel', () => { if (S.ver.bad >= 1 && once('sc_mirror') && SCARES_ON) { silence(800); setTimeout(() => { if (S && !S.over) jumpscare('short'); }, 800); } say(S.ver.bad === 0 ? 'Dein Gesicht im staubigen Spiegel: blass, müde. Du wischst mit dem Ärmel – dahinter bist nur du. Noch.' : S.ver.bad === 1 ? 'In Kinderschrift steht auf dem beschlagenen Glas: <i>HINTER DIR</i>. Du drehst dich um. Nichts. Als du zurückblickst, ist die Schrift verwischt.' : 'Auf dem Glas steht: <i>KOMM HOCH</i>. Darunter malt jemand mit dem Finger einen kleinen Kreis.'); });
     const m = box(.35, .5, .15, M.white, 7.6, 1.3, -4.88); ia(m, 'Medizinschrank', () => say('Verstaubte Pillendosen, ein Päckchen Kinderpflaster mit Tiermotiven. Nichts, was dir hier raushilft.'));
     const v = box(.05, 1.9, 1, Lm(0x7a8a7a, { transparent: true, opacity: .75 }), 7.6, 0, -2.2); ia(v, 'Verstecken – hinter den Duschvorhang', () => hideIn(HIDE.bad));
   }
@@ -555,7 +564,7 @@
     const r = grp(ox - 4.55, 0, 3.4); box(.5, 1.9, 1.6, M.dwood, 0, 0, 0, r); for (let i = 0; i < 3; i++) for (let j = 0; j < 4; j++) cyl(.07, .07, .16, M.metal, .05, .35 + i * .55, -.55 + j * .35, r); col(ox - 4.55, 3.4, .5, 1.6);
     KE.regal = r; box(.07, .07, .07, new THREE.MeshBasicMaterial({ color: 0x8c8cff }), .27, 1.5, 0, r);
     ia(r, 'Regal abtasten', () => {
-      if (!has('light')) { say('Deine Hände gleiten über Holz, Dosen, Spinnweben – und dann über etwas Schweres, Kaltes, Rundes: eine <b>Taschenlampe</b>! Du schaltest sie ein.'); S.battery = Math.min(1, S.battery + .55); give('light'); setLight(true); say('Tipp: Mit <b>F</b> schaltest du die Lampe an und aus. Die Batterie ist begrenzt – und <i>sie</i> hasst Licht.', 'ev'); }
+      if (!has('light')) { say('Deine Hände gleiten über Holz, Dosen, Spinnweben – und dann über etwas Schweres, Kaltes, Rundes: eine <b>Taschenlampe</b>! Du schaltest sie ein.'); S.battery = Math.min(1, S.battery + .55); give('light'); setLight(true); say('Tipp: Mit <b>F</b> schaltest du die Lampe an und aus. Die Batterie ist begrenzt – und <i>sie</i> hasst Licht.', 'ev'); if (once('sc_keller')) setTimeout(() => { if (S && !S.over && areaOf(P.x) === 'keller') scareBehind(); }, 6500); }
       else say('Dosen, Spinnweben, Staub.');
     });
     const wb = grp(ox - 2, 0, -5.4); box(2.2, .9, .8, M.wood, 0, 0, 0, wb); box(.12, .08, .5, M.metal, .8, .9, 0, wb); box(.3, .02, .2, Lm(0xcfc7a8), -.3, .9, 0, wb); col(ox - 2, -5.4, 2.2, .8);
@@ -616,7 +625,7 @@
     const mr = grp(ox + 3.6, 0, -1.8); box(.9, 1.9, .12, M.cloth, 0, 0, 0, mr); box(.7, 1.6, .02, Lm(0x2a3444), 0, .12, .07, mr); col(ox + 3.6, -1.8, .9, .3); DA.mirror = mr;
     ia(mr, 'Laken', () => {
       if (hints() === 3) openModal(`<h2>🪞 Der Spiegel</h2><p>Du ziehst das Laken weg. Im Spiegel steht <b>Lena</b>: ein kleines Mädchen mit Zöpfen, die Hand von innen gegen das Glas gelegt. Sie lächelt – und sie sieht sehr müde aus. Das Glas ist kein Glas mehr, nur Kälte, die dich anzieht.</p><button class="btn" data-a="end:spiegel">Deine Hand auf ihre legen</button><br><button class="btn alt" data-a="close">Zurücktreten</button>`);
-      else say('Du ziehst das Laken weg: ein Standspiegel. Du siehst dich – und hinter dir ein kleines Mädchen mit Zöpfen. Du fährst herum. Niemand. Im Spiegel ist sie auch weg.', 'scary');
+      else { say('Du ziehst das Laken weg: ein Standspiegel. Du siehst dich – und hinter dir ein kleines Mädchen mit Zöpfen. Du fährst herum. Niemand. Im Spiegel ist sie auch weg.', 'scary'); if (once('sc_sheet') && SCARES_ON) { silence(600); setTimeout(() => { if (S && !S.over) jumpscare('long'); }, 600); } }
     });
     const gp = box(.1, 1.2, .9, M.dark, ox - 3.55, 0, -.5); ia(gp, 'Verstecken – hinter die Koffer', () => hideIn(HIDE.dach));
     const lad = grp(ox - 4.2, 0, 2.3); box(.08, 2.6, .08, M.dwood, -.3, 0, 0, lad); box(.08, 2.6, .08, M.dwood, .3, 0, 0, lad); for (let i = 0; i < 7; i++) box(.6, .05, .06, M.dwood, 0, .3 + i * .35, 0, lad);
@@ -655,17 +664,19 @@
     keller: [[95.8, -5], [104.3, -5], [96, 5]], kinder: [[196.5, -3.2], [203.5, -3.2], [203.5, 0]], dach: [[295.5, -2.5], [304.5, -2.5], [304.5, 2.5]]
   };
   const G = { mode: 'away', timer: 50, x: 0, z: 0, area: 'ground', path: [], pathT: 0, lit: 0, search: 0, walk: 0, mesh: null, stepT: 0 };
-  {
+  function makeFigure() {
     const g = new THREE.Group(), m = Lm(0x0c0c10);
     const legL = box(.1, .95, .1, m, -.1, 0, 0, g), legR = box(.1, .95, .1, m, .1, 0, 0, g);
     box(.34, .95, .2, m, 0, .95, 0, g);
-    const head = sph(.17, m, 0, 2.1, 0, g, 1, 1.45, 1);
+    sph(.17, m, 0, 2.1, 0, g, 1, 1.45, 1);
     const armL = cyl(.04, .03, 1.35, m, -.26, .55, 0, g, 6), armR = cyl(.04, .03, 1.35, m, .26, .55, 0, g, 6);
     const eyeM = new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false });
     const e1 = new THREE.Mesh(new THREE.CircleGeometry(.035, 10), eyeM); e1.position.set(-.07, 2.14, .16); g.add(e1);
     const e2 = e1.clone(); e2.position.x = .07; g.add(e2);
-    g.userData = { legL, legR, armL, armR }; g.visible = false; scene.add(g); G.mesh = g;
+    g.userData = { legL, legR, armL, armR }; g.visible = false; scene.add(g); return g;
   }
+  G.mesh = makeFigure();
+  const PH = makeFigure();   // Phantom für Schreckmomente
   const W1 = ['Schwere, nasse Schritte. Irgendwo ganz nah.', 'Fingernägel kratzen über Holz. Hinter der nächsten Wand.', 'Etwas atmet. Es ist nicht dein Atem.'];
   const W2 = ['Irgendwo im Haus knarrt eine Diele. Langsam. Regelmäßig.', 'Ein Schleifen, als zöge etwas Langes seine Beine nach.', 'Das Haus hält den Atem an. Dann: Schritte.'];
 
@@ -896,11 +907,11 @@
   let shake = 0;
   function caught(txt) {
     if (S.caughtLock || S.over) return; S.caughtLock = true;
-    S.hidden = null; G.mesh.visible = false; G.mode = 'away'; G.timer = 40;
-    S.lives--; shake = 1; sfx.caught(); sfx.scare(); say(txt, 'chg scary'); hud();
-    $('jump').innerHTML = FIG; $('jump').style.display = 'grid';
-    setTimeout(() => {
-      $('jump').style.display = 'none';
+    S.hidden = null; G.mode = 'away'; G.timer = 40; setTimeout(() => { G.mesh.visible = false; }, 400);
+    S.lives--; shake = 1; say(txt, 'chg scary'); hud();
+    lookAt(G.x, G.z);
+    jumpscare('catch', () => {
+      if (S.over) return;
       if (S.lives <= 0) { S.caughtLock = false; ending('verschlungen'); return; }
       blk.textContent = S.lives === 1 ? 'Dir wird schwarz vor Augen … Ein drittes Mal überstehst du das nicht.' : 'Alles wird schwarz …'; blk.classList.add('on');
       setTimeout(() => {
@@ -908,8 +919,56 @@
         say('Du kommst zu dir. Dein Herz rast. Du liegst wieder im Schlafzimmer – wie viel Zeit ist vergangen?', 'chg');
         blk.classList.remove('on');
       }, 2000);
-    }, 650);
+    });
   }
+  const FACE = '<svg viewBox="0 0 200 280" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="fg" cx="50%" cy="35%" r="70%"><stop offset="0" stop-color="#cfcbbf"/><stop offset=".7" stop-color="#6d695e"/><stop offset="1" stop-color="#2b2924"/></radialGradient><radialGradient id="mg" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#1a0000"/><stop offset="1" stop-color="#000"/></radialGradient></defs><path d="M30 130C10 20 190 20 170 130L196 280 160 220 140 280 100 230 60 280 40 220 4 280Z" fill="#030303"/><path d="M48 118C46 34 154 34 152 118 152 190 130 258 100 266 70 258 48 190 48 118Z" fill="url(#fg)"/><ellipse cx="76" cy="108" rx="21" ry="32" transform="rotate(-10 76 108)" fill="#000"/><ellipse cx="124" cy="108" rx="21" ry="32" transform="rotate(10 124 108)" fill="#000"/><circle cx="80" cy="118" r="3.6" fill="#fff"/><circle cx="120" cy="118" r="3.6" fill="#fff"/><path d="M76 138C74 170 70 190 66 205M124 138C126 170 130 190 134 205" stroke="#1a1a18" stroke-width="3" fill="none"/><path d="M80 142C79 160 78 172 76 186" stroke="#5a0000" stroke-width="2.5" fill="none"/><path d="M92 156l-3 12h5zM108 156l3 12h-5z" fill="#1c1b18"/><ellipse cx="100" cy="212" rx="25" ry="46" fill="url(#mg)"/><path d="M80 178l5 18 5-16 5 20 5-20 5 20 5-16 5 18" fill="none" stroke="#d9d4c2" stroke-width="3.5"/><path d="M82 246l4-16 5 14 5-17 5 17 5-14 4 16" fill="none" stroke="#d9d4c2" stroke-width="3"/><path d="M60 62l14 40M142 58l-14 40M100 36l2 30" stroke="#22211d" stroke-width="2.5" fill="none"/></svg>';
+  let SCARES_ON = true;
+  try { SCARES_ON = localStorage.getItem('haus-scares') !== '0'; } catch (e) {}
+  $('scOpt').checked = SCARES_ON;
+  $('scOpt').onchange = e => { SCARES_ON = e.target.checked; try { localStorage.setItem('haus-scares', SCARES_ON ? '1' : '0'); } catch (x) {} };
+  // Jumpscare: Gesicht füllt den Bildschirm, Blitz, Schrei
+  function jumpscare(kind, after) {
+    if (!SCARES_ON) { sfx.caught(); shake = .5; setTimeout(() => after && after(), 300); return; }
+    const dur = kind === 'long' ? 1100 : kind === 'catch' ? 1000 : 520;
+    const j = $('jump'), f = $('flash');
+    sfx.sting(); shake = 1;
+    j.style.setProperty('--jd', dur + 'ms'); j.innerHTML = FACE; j.style.display = 'grid';
+    f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
+    setTimeout(() => { j.style.display = 'none'; after && after(); }, dur);
+  }
+  const lookAt = (x, z) => { P.yaw = Math.atan2(-(x - P.x), -(z - P.z)); P.pitch = .12; };
+  const phHide = () => { PH.visible = false; };
+  const faceP = () => { PH.rotation.y = Math.atan2(P.x - PH.position.x, P.z - PH.position.z); };
+  const once = k => { if (S.flags[k]) return false; S.flags[k] = 1; return true; };
+  // Gestalt taucht direkt hinter dir auf
+  function scareBehind() {
+    if (!S || S.over || S.hidden || !SCARES_ON || S.scareBusy) return; S.scareBusy = true;
+    silence(1100);
+    setTimeout(() => {
+      if (S.over) { S.scareBusy = false; return; }
+      let d = 2.4, bx, bz; for (; d > 1.1; d -= .4) { bx = P.x + Math.sin(P.yaw) * d; bz = P.z + Math.cos(P.yaw) * d; if (!blocked(bx, bz)) break; }
+      PH.position.set(bx, 0, bz); faceP(); PH.visible = true; sfx.slam(); lightsFlash();
+      setTimeout(() => { lookAt(bx, bz); }, 120);
+      setTimeout(() => jumpscare('short', () => { phHide(); S.scareBusy = false; }), 520);
+    }, 1100);
+  }
+  // Gestalt rast den Flur entlang auf dich zu
+  function rushScare() {
+    if (!S || S.over || S.hidden || !SCARES_ON || S.scareBusy) return; S.scareBusy = true;
+    const fromX = P.x < 0 ? 8.4 : -8.4; PH.position.set(fromX, 0, 0); faceP();
+    silence(900);
+    setTimeout(() => {
+      PH.visible = true; sfx.sting(); lightsFlash(); let t = 0;
+      anims.push(dt => {
+        t += dt; const dx = P.x - PH.position.x, dz = P.z - PH.position.z, d = Math.hypot(dx, dz);
+        PH.position.x += dx / d * 9 * dt; PH.position.z += dz / d * 9 * dt; faceP();
+        const u = PH.userData; u.legL.rotation.x = Math.sin(t * 25) * .8; u.legR.rotation.x = -Math.sin(t * 25) * .8;
+        if (d < 2.1 || t > 2.2) { lookAt(PH.position.x, PH.position.z); jumpscare('short', () => { phHide(); S.scareBusy = false; }); return true; }
+        return false;
+      });
+    }, 900);
+  }
+  function lightsFlash() { lo = .18; }
   const FIG = '<svg viewBox="0 0 100 260" xmlns="http://www.w3.org/2000/svg"><g fill="#000"><ellipse cx="50" cy="38" rx="19" ry="27"/><path d="M43 62h14l6 60 12 108h-8l-10-80-3 80h-8l-3-80-10 80h-8l12-108z"/><path d="M41 78 6 196l7 4 34-98zM59 78l35 118-7 4-34-98z"/></g><ellipse cx="42" cy="36" rx="4" ry="8" fill="#fff"/><ellipse cx="58" cy="36" rx="4" ry="8" fill="#fff"/></svg>';
 
   // ---- Angst ----
@@ -919,10 +978,12 @@
     if (G.mode !== 'away' && G.area === areaOf(P.x)) { const d = Math.hypot(G.x - P.x, G.z - P.z); f += clamp((14 - d) / 12, 0, 1) * .75; }
     return Math.min(1, f);
   }
+  let silenceUntil = 0;
+  const silence = ms => { silenceUntil = performance.now() + ms; if (AC) { droneG.gain.cancelScheduledValues(AC.currentTime); droneG.gain.setTargetAtTime(0, AC.currentTime, .05); windG.gain.setTargetAtTime(0, AC.currentTime, .05); } };
   function applyFear() {
     const f = fear(); fearV = f;
     document.documentElement.style.setProperty('--fear', f.toFixed(2)); document.documentElement.style.setProperty('--beat', (1.3 - f * .85).toFixed(2) + 's');
-    if (AC) { const t = AC.currentTime; droneG.gain.setTargetAtTime(S && S.over ? .015 : .05 + f * .09, t, .5); lp.frequency.setTargetAtTime(120 + f * 320, t, .5); windG.gain.setTargetAtTime(.02 + f * .03, t, .5); }
+    if (AC && performance.now() >= silenceUntil) { const t = AC.currentTime; droneG.gain.setTargetAtTime(S && S.over ? .015 : .05 + f * .09, t, .5); lp.frequency.setTargetAtTime(120 + f * 320, t, .5); windG.gain.setTargetAtTime(.02 + f * .03, t, .5); }
   }
 
   // =====================================================================
@@ -994,7 +1055,7 @@
     for (const c of CHANGES) {
       if (c.state === 0 && S.T >= c.at && room !== c.room) { c.apply(); c.state = 1; }
     }
-    if (room !== lastRoom) { lastRoom = room; enterRoom(room); }
+    if (room !== lastRoom) { lastRoom = room; enterRoom(room); if (room === 'flur' && S.T > 240 && (S.rush || 0) < 2 && G.mode === 'away' && S.T > (S.nextRush || 0) && Math.random() < .4) { S.rush = (S.rush || 0) + 1; S.nextRush = S.T + 300; setTimeout(rushScare, 700); } }
     for (const ev of EVENTS) if (!S.fired[ev.at] && S.T >= ev.at) { S.fired[ev.at] = 1; say(ev.t, 'ev'); ev.s && ev.s(); }
     if (S.T >= TOTAL) { ending('behaelt'); return; }
 
@@ -1067,15 +1128,12 @@
     amb.intensity = blackout ? 0 : AREAS[area].amb;
     scene.fog.density = AREAS[area].fog * (1 + f * .45);
     // Phantom: kurz sichtbare Gestalt im Stromausfall-Flackern
-    if (phantom > 0) {
+    if (phantom > 0 && !S.scareBusy) {
       phantom -= dt;
-      if (!G.mesh.visible || G.mode === 'away') {
-        const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw);
-        G.mesh.position.set(P.x + fx * 4.5, 0, P.z + fz * 4.5); G.mesh.rotation.y = Math.atan2(-fx, -fz);
-        G.mesh.visible = !blackout && phantom > 0 && phantom < .8;
-        if (G.mesh.visible && !phantomSnd) { phantomSnd = true; noise(.4, 700, 1, .15); }
-      }
-      if (phantom <= 0 && G.mode === 'away') { G.mesh.visible = false; phantomSnd = false; }
+      const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw), px = P.x + fx * 4.5, pz = P.z + fz * 4.5;
+      if (!blocked(px, pz)) { PH.position.set(px, 0, pz); PH.rotation.y = Math.atan2(-fx, -fz); PH.visible = !blackout && phantom > 0 && phantom < .8; }
+      if (PH.visible && !phantomSnd) { phantomSnd = true; noise(.4, 700, 1, .15); }
+      if (phantom <= 0) { PH.visible = false; phantomSnd = false; }
     }
     // Zufalls-Geräusche
     if (f > .3 && Math.random() < .05 * dt * 20 / 20) sfx.whisper();
@@ -1099,8 +1157,8 @@
   // Start
   // =====================================================================
   function newGame() {
-    S = { T: 0, inv: {}, flags: {}, lives: 3, battery: 0, lightOn: false, over: false, ver: { wohn: 0, kueche: 0, bad: 0, schlaf: 0, kinder: 0 }, fired: {}, hidden: null, caughtLock: false, code: [0, 0, 0] };
-    torch.visible = false; G.mode = 'away'; G.timer = 50; G.mesh.visible = false; G.warned1 = false;
+    S = { rush: 0, nextRush: 0, scareBusy: false, T: 0, inv: {}, flags: {}, lives: 3, battery: 0, lightOn: false, over: false, ver: { wohn: 0, kueche: 0, bad: 0, schlaf: 0, kinder: 0 }, fired: {}, hidden: null, caughtLock: false, code: [0, 0, 0] };
+    torch.visible = false; G.mode = 'away'; G.timer = 50; G.mesh.visible = false; PH.visible = false; G.warned1 = false;
     Object.values(HIDE).forEach(h => { h.burn = 0; });
     doors.keller.open = false; doors.keller.col.on = true; doors.keller.pivot.rotation.y = 0;
     CHANGES.forEach(c => { c.state = 0; });
@@ -1125,7 +1183,7 @@
     tp: (x, z, yaw = 0, pitch = 0) => { P.x = x; P.z = z; P.yaw = yaw; P.pitch = pitch; const a = areaOf(x); teleport(a, { x, z, yaw }); },
     use: label => { const e = IA.find(i => String(i.label).includes(label)); if (!e) return 'none:' + label; e.run(); return 'ok'; },
     setT: v => { S.T = v; }, area: () => areaOf(P.x), room: () => roomOf(P.x, P.z), curIA: () => curIA && curIA.label,
-    step: n => { for (let i = 0; i < n; i++) update(1 / 30); }, ending, caught, spawnG, hideIn, unhide, give
+    step: n => { for (let i = 0; i < n; i++) update(1 / 30); }, ending, caught, spawnG, hideIn, unhide, give, jumpscare, scareBehind, rushScare, PH
   };
 })();
 </script>
