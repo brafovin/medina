@@ -78,6 +78,44 @@
   #end .no{text-align:center;color:var(--dim);font:13px system-ui,sans-serif;letter-spacing:2px;text-transform:uppercase}
   .dim{color:var(--dim);font-size:14px}
   a{color:#94a3b8;font:14px system-ui,sans-serif}
+  .slot{position:relative}
+  .bd{position:absolute;right:-3px;bottom:-3px;font:700 10px system-ui,sans-serif;background:#000;border:1px solid #444;border-radius:6px;padding:0 3px;color:#fde047}
+  #nerv{font-size:16px;letter-spacing:2px}
+  #grain{position:absolute;inset:0;width:100%;height:100%;opacity:.16;image-rendering:pixelated;pointer-events:none;mix-blend-mode:overlay;z-index:3}
+  #scene::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:4;background:radial-gradient(ellipse at center,transparent 40%,rgba(130,0,0,.8) 100%);opacity:calc(var(--fear,0)*.95);animation:beat var(--beat,2s) infinite}
+  @keyframes beat{0%,100%{transform:scale(1)}12%{transform:scale(1.07)}24%{transform:scale(1)}36%{transform:scale(1.05)}}
+  #fx{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:hidden}
+  .eyes{position:absolute;width:34px;height:10px;animation:eyein .5s forwards;transition:opacity .15s}
+  .eyes::before,.eyes::after{content:'';position:absolute;top:0;width:12px;height:8px;border-radius:50%;background:#fef9c3;box-shadow:0 0 10px 3px rgba(254,240,138,.7)}
+  .eyes::before{left:0}.eyes::after{right:0}
+  .eyes.gone{opacity:0}
+  @keyframes eyein{from{opacity:0}to{opacity:.9}}
+  #lo{position:absolute;inset:0;background:#000;z-index:6;opacity:0;pointer-events:none}
+  #scene.lo #lo{opacity:1}
+  .glimpse{position:absolute;bottom:0;height:78%;z-index:5;opacity:.92;pointer-events:none;filter:drop-shadow(0 0 6px rgba(255,255,255,.4))}
+  .shk{animation:shk .5s}
+  @keyframes shk{0%,100%{transform:none}15%{transform:translate(-8px,4px)}30%{transform:translate(9px,-5px)}45%{transform:translate(-6px,-3px)}60%{transform:translate(7px,5px)}80%{transform:translate(-3px,2px)}}
+  .it.danger{animation:dng 1s infinite}
+  .it.danger small{color:#fca5a5;font-weight:700}
+  @keyframes dng{50%{filter:drop-shadow(0 0 14px #ef4444) brightness(1.35)}}
+  #log p.scary{color:#fca5a5}
+  #enc{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:14px;overflow:auto;background:radial-gradient(circle at 50% 33%,#a32222 0%,#4a0a0a 30%,#150205 62%,#000 100%)}
+  #enc .ebx{max-width:520px;width:100%;text-align:center}
+  #enc svg{height:min(38vh,300px);animation:loom .7s ease-out,jit .18s infinite .7s;filter:drop-shadow(0 0 10px rgba(255,255,255,.3))}
+  @keyframes loom{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+  @keyframes jit{0%,100%{transform:translate(0)}50%{transform:translate(2px,-1px)}}
+  #enc h2{margin:6px 0;color:#fecaca;font-size:clamp(24px,6vw,36px)}
+  #enc p{margin:4px 0 8px;color:#fca5a5}
+  #encbar{height:8px;border-radius:6px;background:#2a0a0a;overflow:hidden;margin:6px 0 12px}
+  #encbar i{display:block;height:100%;background:#ef4444;animation:bar var(--ms,6.5s) linear forwards}
+  @keyframes bar{from{width:100%}to{width:0}}
+  #encopts{display:flex;flex-direction:column;gap:8px}
+  #encopts button{background:#1d0b0f;border:1px solid #7f1d1d;border-radius:10px;padding:12px;font-size:17px;color:#fee2e2}
+  #encopts button small{display:block;font:12px system-ui,sans-serif;color:#fca5a5;margin-top:2px}
+  #encopts button:hover:not(:disabled){background:#3b0f16;border-color:#ef4444}
+  #encopts button:disabled{opacity:.4;cursor:not-allowed}
+  #black{position:fixed;inset:0;background:#000;z-index:30;opacity:0;pointer-events:none;transition:opacity .6s;display:grid;place-items:center;color:#fca5a5;font-style:italic;padding:20px;text-align:center}
+  #black.on{opacity:1;pointer-events:auto}
   @media(max-width:560px){.grp>span{min-width:100%}}
 </style>
 </head>
@@ -86,9 +124,9 @@
   <header id="hud">
     <div class="ttl">🏚️ Das verlassene Haus</div>
     <div id="inv"></div>
-    <div class="right"><span id="clock">🕰 23:00</span><button id="mute" title="Sound">🔊</button></div>
+    <div class="right"><span id="nerv"></span><span id="clock">🕰 23:00</span><button id="mute" title="Sound">🔊</button></div>
   </header>
-  <div id="scene"><div id="rname"></div><div id="stage"></div><div id="tint"></div><div id="dark"></div></div>
+  <div id="scene"><div id="rname"></div><div id="stage"></div><div id="tint"></div><div id="dark"></div><canvas id="grain"></canvas><div id="fx"></div><div id="lo"></div></div>
   <div id="log"></div>
   <div id="acts"></div>
 </div>
@@ -97,12 +135,20 @@
 
 <div id="end" class="hidden"><div class="box" id="ebox"></div></div>
 
+<div id="enc" class="hidden"><div class="ebx">
+  <div id="encfig"></div><h2 id="enct"></h2><p id="encp"></p>
+  <div id="encbar"><i></i></div><div id="encopts"></div>
+</div></div>
+<div id="black"></div>
+
 <div id="title">
   <div class="box">
     <h1>Das verlassene Haus</h1>
     <p>Du wachst auf – allein, in einem Haus, das seit Jahren leer steht. Die Türen sind verschlossen, die Uhr ist stehen geblieben.</p>
     <p>Finde <b>5 Gegenstände</b>, um wieder hinauszukommen. Aber sei vorsichtig: Das Haus verändert sich, wenn du nicht hinsiehst … und die Zeit läuft.</p>
-    <p class="dim">Klicke auf Dinge im Raum oder nutze die Knöpfe darunter. Es gibt <b>6 verschiedene Enden</b>.</p>
+    <p>Und du bist nicht allein. <b>Etwas</b> geht durch die Flure und sucht dich.</p>
+    <p class="dim">Klicke auf Dinge im Raum oder nutze die Knöpfe darunter. Es gibt <b>8 verschiedene Enden</b>.</p>
+    <p class="dim">🎧 Mit Kopfhörern am gruseligsten. Enthält Schreckmomente und flackernde Bilder.</p>
     <p class="dim" id="found"></p>
     <button class="btn" id="startBtn">Betreten</button><br>
     <a href="index.html">← Startseite</a>
@@ -123,33 +169,69 @@
   };
   const HINTS = ['diary', 'photo', 'letter'];
   const READ = {
-    diary: `<p class="paper">3. Oktober.<br><br>Ich habe das Haus abgeschlossen und werde es nie wieder betreten. Seit jener Nacht um 3:07 Uhr, als Lena verschwand, ist hier nichts mehr, wie es war. Das Kind fragt nicht mehr nach ihr. Vielleicht ist das besser.<br><br>Ich sichere die Haustür mit einem Zahlenschloss und verteile den Code auf drei Orte, damit ihn niemand allein findet. Der erste Teil, hier: die <mark>DREI</mark>.<br><br>– M.</p>`,
+    diary: `<p class="paper">3. Oktober.<br><br>Ich habe das Haus abgeschlossen und werde es nie wieder betreten. Seit jener Nacht um 3:07 Uhr, als Lena verschwand, ist hier nichts mehr, wie es war. Das Kind fragt nicht mehr nach ihr. Vielleicht ist das besser.<br><br>Etwas anderes ist seit jener Nacht im Haus. Ich habe es nie gesehen, nur gehört. Es kommt, wenn man zu lange an einem Ort bleibt.<br><br>Ich sichere die Haustür mit einem Zahlenschloss und verteile den Code auf drei Orte, damit ihn niemand allein findet. Der erste Teil, hier: die <mark>DREI</mark>.<br><br>– M.</p>`,
     photo: `<p>Zwei Kinder auf einer Schaukel im Garten, mitten im Lachen. Das Foto ist in der Mitte zerrissen – neben dem lachenden Mädchen mit den Zöpfen ist ein leerer Platz. <i>Dein</i> Platz.</p><p class="paper">Auf der Rückseite, in Kinderschrift: „Lena &amp; ich – für immer.“<br>Darunter, in Mamas Schrift: „Zweiter Teil des Codes: <mark>NULL</mark>. Ein Kreis hat kein Ende.“</p>`,
-    letter: `<p class="paper">Liebes Geschwisterchen,<br><br>ich bin nicht weggelaufen. Wir haben Verstecken gespielt, und ich habe mich so gut versteckt, dass du mich nicht mehr gefunden hast. Dann bist du eingeschlafen und ich konnte nicht mehr zurück.<br><br>Das Haus hält mich fest, weil ich noch darauf warte, dass du <i>mich</i> rufst. Wenn du das hier liest: Geh nicht einfach. Ruf meinen Namen an der Tür, dann darf ich auch gehen.<br><br>Der letzte Teil des Codes: <mark>SIEBEN</mark>. So alt war ich.<br><br>Deine Lena</p>`
+    letter: `<p class="paper">Liebes Geschwisterchen,<br><br>ich bin nicht weggelaufen. Wir haben Verstecken gespielt, und ich habe mich so gut versteckt, dass du mich nicht mehr gefunden hast. Dann bist du eingeschlafen und ich konnte nicht mehr zurück.<br><br>Das Haus hält mich fest, weil ich noch darauf warte, dass du <i>mich</i> rufst. Wenn du das hier liest: Geh nicht einfach. Ruf meinen Namen an der Tür, dann darf ich auch gehen.<br><br>Und wenn etwas durch die Flure geht – das bin nicht ich. Es ist, was das Haus aus meiner Angst gemacht hat. Es hasst Licht, und es findet dich nicht, wenn du dich versteckst. Aber es merkt sich jedes Versteck.<br><br>Der letzte Teil des Codes: <mark>SIEBEN</mark>. So alt war ich.<br><br>Deine Lena</p>`
   };
 
   // ---------- Sound ----------
-  let AC = null, muted = false;
-  function snd(f, d = .1, type = 'sine', v = .05, slide = 0, delay = 0) {
-    if (muted) return;
+  let AC = null, muted = false, master, droneG, lp, windG, noiseBuf, beatTimer = null, fearV = 0;
+  function audioInit() {
+    if (AC) return;
     try {
-      AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+      AC = new (window.AudioContext || window.webkitAudioContext)();
+      master = AC.createGain(); master.gain.value = muted ? 0 : 1; master.connect(AC.destination);
+      lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 140;
+      droneG = AC.createGain(); droneG.gain.value = .06;
+      [55, 55.8, 82.4].forEach((f, i) => { const o = AC.createOscillator(); o.type = i === 2 ? 'sine' : 'sawtooth'; o.frequency.value = f; o.connect(lp); o.start(); });
+      lp.connect(droneG); droneG.connect(master);
+      const lfo = AC.createOscillator(), lg = AC.createGain(); lfo.frequency.value = .12; lg.gain.value = .025; lfo.connect(lg); lg.connect(droneG.gain); lfo.start();
+      noiseBuf = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate);
+      const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      const ns = AC.createBufferSource(); ns.buffer = noiseBuf; ns.loop = true;
+      const bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 500; bp.Q.value = .8;
+      windG = AC.createGain(); windG.gain.value = .025; ns.connect(bp); bp.connect(windG); windG.connect(master); ns.start();
+      const wl = AC.createOscillator(), wg = AC.createGain(); wl.frequency.value = .07; wg.gain.value = 250; wl.connect(wg); wg.connect(bp.frequency); wl.start();
+    } catch (e) { AC = null; }
+  }
+  function snd(f, d = .1, type = 'sine', v = .05, slide = 0, delay = 0) {
+    if (muted || !AC) return;
+    try {
       const o = AC.createOscillator(), g = AC.createGain(), n = AC.currentTime + delay;
       o.type = type; o.frequency.setValueAtTime(f, n);
       if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(25, f + slide), n + d);
       g.gain.setValueAtTime(v, n); g.gain.exponentialRampToValueAtTime(.0001, n + d);
-      o.connect(g); g.connect(AC.destination); o.start(n); o.stop(n + d);
+      o.connect(g); g.connect(master); o.start(n); o.stop(n + d);
+    } catch (e) {}
+  }
+  function noise(dur, freq, q, vol, delay = 0) {
+    if (muted || !AC) return;
+    try {
+      const s = AC.createBufferSource(); s.buffer = noiseBuf;
+      const f = AC.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q;
+      const g = AC.createGain(), n = AC.currentTime + delay;
+      g.gain.setValueAtTime(0, n); g.gain.linearRampToValueAtTime(vol, n + dur * .3); g.gain.exponentialRampToValueAtTime(.0001, n + dur);
+      s.connect(f); f.connect(g); g.connect(master); s.start(n, Math.random(), dur + .1);
     } catch (e) {}
   }
   const sfx = {
     step: () => snd(80, .15, 'sine', .09, -35),
-    creak: () => snd(130, .7, 'sawtooth', .025, -60),
+    creak: () => snd(130, .7, 'sawtooth', .03, -60),
     got: () => [523, 659, 784].forEach((f, i) => snd(f, .25, 'triangle', .05, 0, i * .1)),
     ring: () => [0, .25, .5, .75].forEach(d => { snd(880, .12, 'square', .03, 0, d); snd(700, .12, 'square', .03, 0, d + .12); }),
-    scare: () => snd(55, 1.2, 'sawtooth', .08, -20),
-    click: () => snd(300, .05, 'square', .03)
+    scare: () => { noise(.9, 300, .5, .3); snd(190, 1, 'sawtooth', .13, -150); snd(60, 1.3, 'sine', .2, -20); },
+    click: () => snd(300, .05, 'square', .03),
+    whisper: () => { noise(.5, 1800, 5, .06); noise(.4, 2600, 7, .05, .35); noise(.6, 1500, 4, .05, .7); },
+    steps: () => [0, .45, .9].forEach(d => snd(65, .2, 'sine', .14, -25, d)),
+    caught: () => { noise(1.2, 200, .4, .35); snd(45, 1.6, 'sawtooth', .2, -15); }
   };
-  $('mute').onclick = () => { muted = !muted; $('mute').textContent = muted ? '🔇' : '🔊'; };
+  function beatLoop() {
+    clearTimeout(beatTimer);
+    if (!S || S.over) return;
+    if (fearV > .25) { const v = .06 + fearV * .2; snd(58, .14, 'sine', v, -25); snd(48, .12, 'sine', v * .8, -20, .17); }
+    beatTimer = setTimeout(beatLoop, 1300 - fearV * 850);
+  }
+  $('mute').onclick = () => { muted = !muted; $('mute').textContent = muted ? '🔇' : '🔊'; if (master) master.gain.value = muted ? 0 : 1; };
 
   // ---------- Zustand ----------
   let S = null, cur = [];
@@ -158,7 +240,121 @@
   const clockMin = () => 1380 + S.steps * (247 / MAX);
   function ver(id) { const th = R[id].th || []; return th.filter(t => S.steps >= t[0]).length; }
 
+  // ---------- Die Gestalt ----------
+  const GRAPH = { schlaf: ['flur'], flur: ['schlaf', 'wohn', 'kueche', 'bad', 'keller', 'kinder'], wohn: ['flur'], kueche: ['flur'], bad: ['flur'], keller: ['flur'], kinder: ['flur', 'dach'], dach: ['kinder'] };
+  const GSTART = 16, ENC_MS = 6500;
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  const FIG = '<svg viewBox="0 0 100 260" xmlns="http://www.w3.org/2000/svg"><g fill="#000"><ellipse cx="50" cy="38" rx="19" ry="27"/><path d="M43 62h14l6 60 12 108h-8l-10-80-3 80h-8l-3-80-10 80h-8l12-108z"/><path d="M41 78 6 196l7 4 34-98zM59 78l35 118-7 4-34-98z"/></g><ellipse cx="42" cy="36" rx="4" ry="8" fill="#fff"/><ellipse cx="58" cy="36" rx="4" ry="8" fill="#fff"/></svg>';
+  const W1 = ['Schwere, nasse Schritte. Direkt nebenan.', 'Eine Tür knarrt – im Raum neben dir. Etwas atmet.', 'Fingernägel kratzen über Holz. Ganz nah.'];
+  const W2 = ['Irgendwo im Haus knarrt eine Diele. Langsam. Regelmäßig.', 'Ein Schleifen, als zöge etwas Langes seine Beine nach.', 'Das Haus hält den Atem an. Dann: Schritte.'];
+  function bfs(from) { const d = { [from]: 0 }, q = [from]; while (q.length) { const c = q.shift(); for (const n of GRAPH[c]) if (!(n in d)) { d[n] = d[c] + 1; q.push(n); } } return d; }
+  const dist = (a, b) => bfs(a)[b];
+  const nextStep = (from, to) => { const d = bfs(to); return GRAPH[from].reduce((a, b) => d[b] < d[a] ? b : a); };
+  const accessible = r => (r !== 'keller' || has('key')) && (r !== 'kinder' || has('light'));
+  function fear() {
+    if (S.over) return 0;
+    let f = Math.min(.55, S.steps / MAX * .55);
+    const g = S.g;
+    if (g.on && g.cd <= 0) { const d = dist(g.room, S.room); f += d === 0 ? 1 : d === 1 ? .35 : d === 2 ? .15 : 0; }
+    return Math.min(1, f);
+  }
+  function applyFear() {
+    const f = fear(); fearV = f;
+    const sc = $('scene');
+    sc.style.setProperty('--fear', f.toFixed(2)); sc.style.setProperty('--beat', (1.3 - f * .85).toFixed(2) + 's');
+    if (AC) {
+      const t = AC.currentTime;
+      droneG.gain.setTargetAtTime(S.over ? .015 : .05 + f * .09, t, .5); lp.frequency.setTargetAtTime(120 + f * 320, t, .5); windG.gain.setTargetAtTime(.02 + f * .03, t, .5);
+    }
+  }
+  const ZW = ['\u0337', '\u0334', '\u0338'];
+  function creepy(t) {
+    if (fearV < .6) return t;
+    return t.replace(/(?<![<\/])\b\p{L}{5,}\b/gu, w => { if (Math.random() > .08) return w; const i = Math.floor(Math.random() * w.length); return w.slice(0, i + 1) + pick(ZW) + w.slice(i + 1); });
+  }
+
+  function gestaltTick() {
+    const g = S.g;
+    if (S.over || S.enc || S.steps < GSTART) return;
+    if (!g.on) { g.on = true; g.room = S.room === 'dach' ? 'keller' : 'dach'; g.mv = 0; g.lastD = 9; }
+    if (g.cd > 0) { g.cd--; return; }
+    if (g.room === S.room) { encounter(); return; }
+    if (++g.mv >= 3) { g.mv = 0; g.room = nextStep(g.room, S.room); }
+    const d = dist(g.room, S.room);
+    if (d === 0) { encounter(); return; }
+    if (d !== g.lastD) {
+      if (d === 1) { say(pick(W1), 'ev scary'); sfx.steps(); } else if (d === 2) { say(pick(W2), 'ev'); sfx.creak(); }
+      g.lastD = d;
+    }
+  }
+
+  let encTO = null;
+  function shakeApp() { const a = $('app'); a.classList.remove('shk'); void a.offsetWidth; a.classList.add('shk'); }
+  function encounter() {
+    if (S.enc || S.over) return;
+    S.enc = true; S.g.encs++;
+    const r = R[S.room], first = S.g.encs === 1;
+    const burned = S.hideUsed[S.room] !== undefined && S.steps - S.hideUsed[S.room] < 30;
+    const canFlash = has('light') && S.charges > 0;
+    sfx.scare(); shakeApp(); applyFear();
+    $('encfig').innerHTML = FIG;
+    $('enct').textContent = first ? 'Da ist etwas im Raum.' : pick(['Sie ist da.', 'Sie hat dich gefunden.', 'Es steht direkt vor dir.']);
+    $('encp').innerHTML = first ? 'Eine lange, dünne Gestalt. Sie hat dich noch nicht berührt. <b>Schnell – entscheide dich!</b>' : 'Du hast nur Sekunden.';
+    $('encopts').innerHTML =
+      `<button data-e="hide" ${burned ? 'disabled' : ''}>1 · 🫥 Verstecken<small>${burned ? 'Dieses Versteck kennt sie schon.' : r.hide}</small></button>` +
+      `<button data-e="flash" ${canFlash ? '' : 'disabled'}>2 · 🔦 Anleuchten<small>${canFlash ? 'Noch ' + S.charges + '× – sie hasst Licht' : has('light') ? 'Die Batterie ist leer.' : 'Du hast kein Licht.'}</small></button>` +
+      `<button data-e="run">3 · 🏃 Weglaufen<small>Riskant – vielleicht erwischt sie dich</small></button>`;
+    $('encbar').innerHTML = '<i></i>'; $('encbar').firstChild.style.animationDuration = ENC_MS + 'ms';
+    $('enc').classList.remove('hidden');
+    clearTimeout(encTO); encTO = setTimeout(() => resolveEnc('caught'), ENC_MS);
+  }
+  function resolveEnc(kind) {
+    if (!S.enc) return;
+    clearTimeout(encTO); S.enc = false; $('enc').classList.add('hidden');
+    const g = S.g, r = R[S.room];
+    if (kind === 'hide') {
+      S.hideUsed[S.room] = S.steps;
+      say(r.hideTxt, 'chg scary');
+      g.room = pick(GRAPH[g.room]); g.cd = 10; g.mv = 0; g.lastD = 9;
+      sfx.steps(); cost(3); render();
+    } else if (kind === 'flash') {
+      S.charges--;
+      say('Du reißt die Taschenlampe hoch. Der Lichtkegel trifft etwas, das kein Gesicht haben sollte. Ein Schrei, der aus den Wänden kommt – dann ist sie fort. Zurück bleibt ein Geruch nach nassem Stein.', 'chg scary');
+      const d = bfs(S.room), far = Math.max(...Object.values(d));
+      g.room = pick(Object.keys(d).filter(k => d[k] === far)); g.cd = 18; g.mv = 0; g.lastD = 9;
+      sfx.scare(); cost(1); render();
+    } else if (kind === 'run') {
+      const opts = GRAPH[S.room].filter(accessible);
+      if (Math.random() < .55 && opts.length) {
+        say('Du stürzt aus dem Raum, die Dielen schreien unter dir. Hinter dir ist nichts mehr zu sehen – nur das Gefühl, verfolgt zu werden.', 'chg scary');
+        g.cd = 1; g.mv = 0; g.lastD = 9; go(pick(opts));
+      } else caught('Du rennst – aber sie ist schon da. Eiskalte Finger legen sich um dein Handgelenk.');
+    } else caught('Du kannst dich nicht bewegen. Sie beugt sich zu dir herunter, so nah, dass du ihren Atem spürst. Er ist kalt.');
+  }
+  function caught(txt) {
+    clearTimeout(encTO); S.enc = false; $('enc').classList.add('hidden');
+    S.lives--; shakeApp(); sfx.caught(); say(txt, 'chg scary'); updateHUD();
+    if (S.lives <= 0) { ending('verschlungen'); return; }
+    const b = $('black');
+    b.textContent = S.lives === 1 ? 'Dir wird schwarz vor Augen … Ein drittes Mal überstehst du das nicht.' : 'Alles wird schwarz …';
+    b.classList.add('on');
+    setTimeout(() => {
+      if (S.over) { b.classList.remove('on'); return; }
+      S.room = 'schlaf'; S.g.room = 'dach'; S.g.cd = 20; S.g.mv = 0; S.g.lastD = 9; S.steps += 8;
+      say('Du kommst zu dir. Dein Herz rast. Du liegst wieder im Schlafzimmer – wie viel Zeit ist vergangen?', 'chg');
+      b.classList.remove('on'); tick(); render();
+    }, 1800);
+  }
+  $('encopts').addEventListener('click', e => { const b = e.target.closest('button'); if (b && !b.disabled) resolveEnc(b.dataset.e); });
+  addEventListener('keydown', e => {
+    if (!S || !S.enc) return;
+    const k = { '1': 'hide', '2': 'flash', '3': 'run' }[e.key];
+    const b = k && $('encopts').querySelector(`[data-e="${k}"]`);
+    if (b && !b.disabled) resolveEnc(k);
+  });
+
   function say(t, c = '') {
+    if (/ev|chg/.test(c)) t = creepy(t);
     S.log.push({ t, c });
     renderLog();
   }
@@ -170,9 +366,11 @@
 
   const EVENTS = [
     { at: 6,   t: 'Irgendwo im Haus schlägt eine Tür zu.', s: () => sfx.creak() },
+    { at: 14,  t: 'Etwas geht durch das Haus. Etwas Schweres, Langsames. Du solltest nicht hier sein, wenn es dich findet.', s: () => sfx.whisper() },
     { at: 18,  t: 'Ein leises Kinderlachen. Du hältst den Atem an – Stille.', s: () => sfx.scare() },
     { at: 45,  t: 'Hinter dir knarren die Dielen. Du drehst dich um. Nichts.', s: () => sfx.creak() },
     { at: 62,  t: 'Es riecht plötzlich nach Kerzenwachs und kaltem Rauch.' },
+    { at: 80,  t: 'Jemand flüstert deinen Namen. Direkt neben deinem Ohr. Du bist allein.', s: () => sfx.whisper() },
     { at: 100, t: 'Die Luft wird dünn. Es ist, als würde das Haus ungeduldig werden. Bald ist es drei.', s: () => sfx.scare() },
     { at: 125, t: 'Die Wände scheinen näher zu rücken. Du hörst ein leises Ticken – von der Standuhr, die doch stillsteht.', s: () => sfx.scare() }
   ];
@@ -186,17 +384,21 @@
     let h = '';
     for (const k in ITEMS) {
       const isH = HINTS.includes(k);
-      h += `<button class="slot ${has(k) ? '' : 'empty'} ${isH ? 'hint' : ''}" data-k="${k}" title="${has(k) ? ITEMS[k].n : '???'}">${has(k) ? ITEMS[k].e : '❔'}</button>`;
+      h += `<button class="slot ${has(k) ? '' : 'empty'} ${isH ? 'hint' : ''}" data-k="${k}" title="${has(k) ? ITEMS[k].n : '???'}">${has(k) ? ITEMS[k].e : '❔'}${k === 'light' && has(k) ? `<span class="bd">⚡${S.charges}</span>` : ''}</button>`;
     }
     const d = i => [S.inv.diary, S.inv.photo, S.inv.letter][i] ? CODE[i] : '?';
     if (hints()) h += `<span id="code">Code: ${d(0)}·${d(1)}·${d(2)}</span>`;
     $('inv').innerHTML = h;
+    $('nerv').textContent = '❤️'.repeat(Math.max(0, S.lives)) + '🖤'.repeat(Math.max(0, 3 - S.lives));
+    applyFear();
   }
 
   function tick() {
     updateHUD();
     for (const ev of EVENTS) if (!S.fired[ev.at] && S.steps >= ev.at) { S.fired[ev.at] = 1; say(ev.t, 'ev'); ev.s && ev.s(); }
     checkChanges();
+    gestaltTick();
+    updateHUD();
     if (S.steps >= MAX && !S.over) ending('behaelt');
   }
   function cost(n = 1) { S.steps += n; tick(); }
@@ -213,7 +415,7 @@
   // ---------- Hilfsfunktionen für Räume ----------
   const hot = (l, e, x, y, s, run, o = {}) => ({ k: 'look', l, e, x, y, s, run, ...o });
   const exit = (to, l, x, y, o = {}) => ({
-    k: 'go', l, e: o.e || '🚪', x, y, s: o.s || 22,
+    k: 'go', to, l, e: o.e || '🚪', x, y, s: o.s || 22,
     run() {
       if (o.ok && !o.ok()) { say(o.why); return; }
       if (o.pre && !S.flags['pre_' + to]) { S.flags['pre_' + to] = 1; say(o.pre); }
@@ -226,8 +428,8 @@
   // ---------- Räume ----------
   const R = {
     schlaf: {
-      name: 'Schlafzimmer', wall: '#3b2f35', floor: '#241a1d',
-      th: [[50, 'Auf dem Bett sitzt jetzt ein kleiner Teddybär. Das war vorhin nicht so.']],
+      name: 'Schlafzimmer', wall: '#3b2f35', floor: '#241a1d', hide: 'unters Bett', hideTxt: 'Du rollst dich unters Bett. Staub in Mund und Nase. Zwei bleiche, nackte Füße betreten das Zimmer und bleiben direkt neben deinem Gesicht stehen. Etwas beugt sich langsam herunter … riecht … und geht wieder.',
+      th: [[50, 'Auf dem Bett sitzt jetzt ein kleiner Teddybär. Das war vorhin nicht so.'], [95, 'Die Bettdecke ist zurückgeschlagen, als wäre jemand gerade erst aufgestanden. Neben deiner Kuhle ist eine zweite.']],
       desc: () => 'Ein großes Schlafzimmer. Das Bett ist ungemacht, die Vorhänge hängen in Fetzen. Durch das vergitterte Fenster fällt fahles Mondlicht. Eine Tür führt hinaus in den Flur.',
       deco: v => v >= 1 ? [{ e: '🧸', x: 26, y: 52, s: 9 }] : [],
       hot: v => [
@@ -245,7 +447,7 @@
     },
 
     flur: {
-      name: 'Flur', wall: '#34303a', floor: '#241f1d',
+      name: 'Flur', wall: '#34303a', floor: '#241f1d', hide: 'in die Garderobe', hideTxt: 'Du drückst dich zwischen die Mäntel. Der Stoff riecht nach Mottenkugeln und etwas Süßlichem. Durch den Spalt siehst du Beine, viel zu lang, die im Flur auf und ab gehen. Ein Atmen, ganz nah. Dann entfernen sich die Schritte.',
       th: [[40, 'Das Telefon klingelt – obwohl die Leitung tot sein müsste.'], [100, 'Von der Haustür kommt ein dumpfes Klopfen. Dreimal. Dann Stille.']],
       desc: () => 'Ein langer Flur, die Tapete löst sich in Streifen. Türen führen zum Schlafzimmer, Wohnzimmer, zur Küche und zum Bad. Eine Treppe führt nach oben ins Dunkel, daneben liegt eine schwere Tür zum Keller. Die Haustür trägt ein Zahlenschloss.',
       deco: () => [],
@@ -279,7 +481,7 @@
     },
 
     wohn: {
-      name: 'Wohnzimmer', wall: '#3a3236', floor: '#2b2220',
+      name: 'Wohnzimmer', wall: '#3a3236', floor: '#2b2220', hide: 'hinter das Sofa', hideTxt: 'Du kauerst hinter dem Sofa. Das Laken zittert, als etwas daran vorbeistreicht. Die Standuhr tickt – einmal – und verstummt. Du zählst bis hundert, ohne zu atmen.',
       th: [[20, 'Das Gemälde über dem Kamin … irgendetwas daran ist anders als vorhin.'], [70, 'Am Fenster steht jemand! Du erstarrst – dann bewegt sich nur der Vorhang. Da ist niemand.']],
       desc: () => 'Ein weitläufiges Wohnzimmer. Möbel unter Laken, Mottenlöcher in den Vorhängen. Über dem Kamin hängt ein Familiengemälde, in der Ecke steht eine große Standuhr.',
       deco: v => [{ e: '🪟', x: 82, y: 32, s: 20 }].concat(v >= 2 ? [{ e: '👤', x: 82, y: 34, s: 12, o: .55 }] : []),
@@ -306,7 +508,7 @@
     },
 
     kueche: {
-      name: 'Küche', wall: '#303a38', floor: '#222a27',
+      name: 'Küche', wall: '#303a38', floor: '#222a27', hide: 'unter den Tisch', hideTxt: 'Du kriechst unter den Tisch. Zwei bleiche Hände greifen die Lehne eines Stuhls, rücken ihn ab – und setzen sich. Es wartet. Minutenlang. Dann steht es auf und geht.',
       th: [[30, 'Die Küche riecht seltsam – nach frisch gekochtem Essen? Das ist unmöglich.'], [80, 'Alle Stühle sind jetzt umgekippt. Der Wasserhahn tropft nicht mehr. Die Stille drückt in deinen Ohren.']],
       desc: () => 'Eine Küche wie aus einer anderen Zeit. Geschirr stapelt sich im Spülstein, ein Wasserhahn tropft – <i>drip … drip …</i> In der Ecke eine schwere Hintertür mit Riegel, dahinter wabert Nebel.',
       deco: v => (v >= 1 ? [{ e: '🍲', x: 55, y: 60, s: 9 }] : []).concat(v >= 2 ? [{ e: '🪑', x: 70, y: 82, s: 12, r: 90 }, { e: '🪑', x: 40, y: 84, s: 12, r: -80 }] : []),
@@ -323,13 +525,18 @@
             ? 'Der Tisch ist gedeckt – drei Teller, sauber, staubfrei. Einer davon ist noch warm.'
             : 'Die drei Teller sind verschwunden, nur Kreidestriche auf der Tischplatte: sieben kleine Striche.')),
         hot('Wasserhahn', '🚰', 66, 48, 14, L('Drip … drip … Das Wasser hat eine Rostspur in das Becken gegraben. Wer dreht das Wasser noch an?')),
+        hot('Schublade', '🗃️', 28, 84, 16, () => {
+          if (!S.flags.batt) { S.flags.batt = 1; S.charges += 2; sfx.got(); say('Zwischen Besteck, Korkenziehern und Gummibändern liegen zwei Batterien. <b>🔋 Du steckst sie ein.</b> (+2 Ladungen für die Taschenlampe)', 'got'); }
+          else say('Nur noch Besteck, das nach Rost riecht.');
+          cost(); render();
+        }),
         hot('Hintertür', '🚪', 82, 52, 28, () => backDoor()),
         exit('flur', 'Zum Flur', 8, 60, { s: 22 })
       ]
     },
 
     bad: {
-      name: 'Badezimmer', wall: '#2f3a3e', floor: '#1f2a2c',
+      name: 'Badezimmer', wall: '#2f3a3e', floor: '#1f2a2c', hide: 'hinter den Duschvorhang', hideTxt: 'Du ziehst den Vorhang zu. Durch den Spalt siehst du im Spiegel, wie etwas hinter dir steht – und dein Spiegelbild nicht findet. Es wartet, dreht sich um, geht.',
       th: [[25, 'Der Spiegel ist beschlagen – von innen?'], [75, 'Auf dem Spiegel steht wieder etwas. Neue Schrift.']],
       desc: () => 'Ein enges Bad mit gesprungenen Fliesen. Eine Wanne mit klarem Wasser, ein kleiner Medizinschrank und ein Spiegel über dem Waschbecken.',
       deco: v => v === 1 ? [{ t: 'HINTER DIR', x: 40, y: 38 }] : v >= 2 ? [{ t: 'KOMM HOCH', x: 40, y: 38 }] : [],
@@ -346,7 +553,7 @@
     },
 
     keller: {
-      name: 'Keller', wall: '#222226', floor: '#141416', dark: true,
+      name: 'Keller', wall: '#222226', floor: '#141416', hide: 'hinter die Regale', hideTxt: 'Du zwängst dich zwischen Regal und Wand und schaltest das Licht aus. Gläser klirren. Etwas streicht an den Steinwänden entlang, langsam, wie eine tastende Hand.', dark: true,
       th: [[60, 'Hinter dir fällt ein Einmachglas aus dem Regal und zerspringt. Niemand ist hier. Oder?']],
       desc: () => has('light')
         ? 'Dein Lichtkegel gleitet über Steinwände, Einmachgläser, eine Werkbank und ein altes Fahrrad. In der Ecke steht eine Holzkiste mit dem Namen <b>LENA</b>.'
@@ -354,7 +561,7 @@
       hot: v => !has('light') ? [
         hot('Regal ertasten', '🗄️', 50, 50, 20, () => {
           say('Deine Hände gleiten über Holz, Dosen, Spinnweben – und dann über etwas Schweres, Kaltes, Rundes: eine <b>Taschenlampe</b>! Du schaltest sie ein.');
-          give('light'); say(R.keller.desc()); say('<i>Tipp: Der Lichtkegel folgt deinem Mauszeiger (oder Finger).</i>', 'ev'); cost(); render();
+          S.charges += 2; give('light'); say(R.keller.desc()); say('<i>Tipp: Der Lichtkegel folgt deinem Mauszeiger (oder Finger).</i>', 'ev'); cost(); render();
         }),
         exit('flur', 'Treppe hinauf', 10, 58, { e: '🪜' })
       ] : [
@@ -370,7 +577,7 @@
     },
 
     kinder: {
-      name: 'Kinderzimmer', wall: '#3a3548', floor: '#2a2433', dark: true,
+      name: 'Kinderzimmer', wall: '#3a3548', floor: '#2a2433', hide: 'in den Kleiderschrank', hideTxt: 'Du schließt dich im Kleiderschrank ein. Durch den Türspalt: Das Schaukelpferd wippt wie wild, die Spieluhr spielt – dann bricht sie ab. Jemand summt das Lied mit, direkt vor der Tür. Dann: Stille.', dark: true,
       th: [[35, 'Das Schaukelpferd bewegt sich. Ganz langsam. Vor und zurück.'], [90, 'Die Spieluhr spielt – von allein. Die Melodie bricht ab, sobald du hinsiehst.']],
       desc: () => 'Ein Zimmer mit zwei kleinen Betten und Sternen auf der Tapete. Ein Schaukelpferd, eine Spielzeugkiste, eine Spieluhr auf der Fensterbank. In der Decke hängt eine Luke zum Dachboden mit einer Leiter.',
       deco: () => [{ e: '⭐', x: 15, y: 18, s: 5 }, { e: '⭐', x: 35, y: 12, s: 4 }, { e: '⭐', x: 62, y: 20, s: 5 }, { e: '🌙', x: 88, y: 16, s: 8 }],
@@ -386,13 +593,13 @@
         hot('Dachbodenluke', '🪜', 50, 18, 14, () => {
           if (!S.flags['pre_dach']) { S.flags['pre_dach'] = 1; say('Du ziehst an der Leiter. Staub rieselt herab. Du kletterst hinauf.'); }
           go('dach');
-        }, { k: 'go' }),
+        }, { k: 'go', to: 'dach' }),
         exit('flur', 'Treppe hinunter', 8, 58)
       ]
     },
 
     dach: {
-      name: 'Dachboden', wall: '#2c2a24', floor: '#1d1b17', dark: true,
+      name: 'Dachboden', wall: '#2c2a24', floor: '#1d1b17', hide: 'hinter die Koffer', hideTxt: 'Du duckst dich hinter die Koffer. Balken knarren. Das Laken über dem Spiegel gleitet langsam zu Boden. Etwas sieht hinein – und weiß nicht, dass du da bist.', dark: true,
       th: [[110, 'Der Streifen Nebellicht durch die Dachluke ist erloschen. Es wird dunkler hier oben.']],
       desc: () => 'Schräge Balken, Spinnweben wie Vorhänge. Alte Koffer, ein Schaukelstuhl und etwas Großes unter einem Laken. Durch eine Luke fällt ein Streifen Nebellicht.',
       deco: () => [{ e: '🕸️', x: 12, y: 16, s: 14 }, { e: '🕸️', x: 90, y: 14, s: 12 }],
@@ -403,13 +610,18 @@
           cost(); render();
         }),
         hot('Schaukelstuhl', '🪑', 58, 70, 22, L('Er wippt leicht. Auf der Lehne liegt ein rotes Zopfgummi.')),
-        hot('Laken', '👻', 80, 56, 22, L('Du ziehst das Laken weg: ein Standspiegel. Du siehst dich – und hinter dir ein kleines Mädchen mit Zöpfen. Du fährst herum. Niemand. Im Spiegel ist sie auch weg.')),
+        hot('Laken', '👻', 80, 56, 22, () => {
+          if (hints() === 3) {
+            modal(`<h2>🪞 Der Spiegel</h2><p>Du ziehst das Laken weg. Im Spiegel steht <b>Lena</b>: ein kleines Mädchen mit Zöpfen, die Hand von innen gegen das Glas gelegt. Sie lächelt – und sie sieht sehr müde aus. Das Glas ist kein Glas mehr, nur Kälte, die dich anzieht.</p><button class="btn" data-a="end:spiegel">Deine Hand auf ihre legen</button><br><button class="btn alt" data-a="close">Zurücktreten</button>`);
+          } else { say('Du ziehst das Laken weg: ein Standspiegel. Du siehst dich – und hinter dir ein kleines Mädchen mit Zöpfen. Du fährst herum. Niemand. Im Spiegel ist sie auch weg.'); cost(); render(); }
+        }),
         exit('kinder', 'Leiter hinab', 10, 50, { e: '🪜' })
       ]
     }
   };
 
   // ---------- Rendering ----------
+  const danger = h => h.k === 'go' && h.to && S.g.on && S.g.cd <= 0 && h.to === S.g.room;
   function render() {
     if (!S) return;
     const r = R[S.room], v = ver(S.room);
@@ -428,19 +640,20 @@
         else html += `<div class="it" style="left:${d.x}%;top:${d.y}%;--s:${d.s};opacity:${d.o || 1};${d.r ? `rotate:${d.r}deg;` : ''}">${d.e}</div>`;
       }
       cur.forEach((h, i) => {
-        html += `<button class="it ${h.k === 'go' ? 'go' : ''} ${h.cls || ''}" data-i="${i}" style="left:${h.x}%;top:${h.y}%;--s:${h.s};${h.f ? `filter:${h.f};` : ''}" title="${h.l}">${h.e}<small>${h.l}</small></button>`;
+        const dg = danger(h);
+        html += `<button class="it ${h.k === 'go' ? 'go' : ''} ${h.cls || ''} ${dg ? 'danger' : ''}" data-i="${i}" style="left:${h.x}%;top:${h.y}%;--s:${h.s};${h.f ? `filter:${h.f};` : ''}" title="${h.l}">${h.e}<small>${dg ? '⚠ ' : ''}${h.l}</small></button>`;
       });
     }
-    $('stage').innerHTML = html;
+    $('stage').innerHTML = html; $('fx').innerHTML = '';
     let a = '';
     const looks = cur.map((h, i) => [h, i]).filter(([h]) => h.k === 'look');
     const gos = cur.map((h, i) => [h, i]).filter(([h]) => h.k === 'go');
     if (looks.length) a += `<div class="grp"><span>Untersuchen</span>${looks.map(([h, i]) => `<button data-i="${i}">${h.l}</button>`).join('')}</div>`;
-    a += `<div class="grp"><span>Gehen</span>${gos.map(([h, i]) => `<button class="go" data-i="${i}">→ ${h.l}</button>`).join('')}<button data-think="1">💭 Nachdenken</button></div>`;
+    a += `<div class="grp"><span>Gehen</span>${gos.map(([h, i]) => `<button class="go" data-i="${i}">→ ${danger(h) ? '⚠ ' : ''}${h.l}</button>`).join('')}<button data-think="1">💭 Nachdenken</button></div>`;
     $('acts').innerHTML = a;
     updateHUD();
   }
-  function press(i) { if (S.over || !$('modal').classList.contains('hidden')) return; sfx.click(); cur[i].run(); }
+  function press(i) { if (S.over || S.enc || !$('modal').classList.contains('hidden')) return; sfx.click(); cur[i].run(); }
   $('scene').addEventListener('click', e => { const b = e.target.closest('button.it'); if (b) press(+b.dataset.i); });
   $('acts').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
@@ -454,6 +667,7 @@
   });
   function trackLight(e) {
     const r = $('scene').getBoundingClientRect(), t = e.touches ? e.touches[0] : e;
+    eyesCheck(t.clientX, t.clientY);
     $('scene').style.setProperty('--mx', (t.clientX - r.left) + 'px'); $('scene').style.setProperty('--my', (t.clientY - r.top) + 'px');
   }
   $('scene').addEventListener('mousemove', trackLight);
@@ -468,7 +682,7 @@
     tick(); render();
   }
   function think() {
-    if (S.over) return;
+    if (S.over || S.enc) return;
     let t;
     if (!has('key')) t = 'Du brauchst einen Schlüssel – aber wo? Der Zettel sagte: dort, wo es einmal warm war. Vielleicht ein Raum mit einem Kamin …';
     else if (!has('light')) t = 'Der Schlüssel passt sicher zu der schweren Tür im Flur: dem Keller. Dort unten wird es dunkel sein – du musst tasten.';
@@ -479,6 +693,8 @@
       if (!has('letter')) o.push(S.flags.phone ? 'Die Stimme sagte: „unterm Dach“.' : 'Es gibt noch einen Ort, der höher liegt als das Kinderzimmer.');
       t = o.join(' ') + ' Du hast ' + hints() + ' von 3 Hinweisen.';
     } else t = 'Drei Ziffern: 3 – 0 – 7. Die Haustür wartet. Und da ist ein Name, den du rufen willst …';
+    if (S.g.encs) t += ' Gegen die Gestalt hilft: Verstecken (jedes Versteck nur einmal), Anleuchten (Batterien!) oder Weglaufen.';
+    else if (S.steps >= GSTART) t += ' Etwas Schweres ist im Haus unterwegs.';
     say('💭 <i>' + t + '</i>'); cost(); render();
   }
   function reader(k) {
@@ -554,34 +770,72 @@
     freiheit: { n: 3, t: 'Freiheit', x: () => `<p>Du trittst hinaus. Das Morgenlicht ist blendend, Vögel singen, als hätte es das alles nie gegeben. Hinter dir fällt die Tür leise ins Schloss.</p><p>Du hast alles gelesen, alles verstanden – und gehst trotzdem, ohne ein Wort. Im Haus, oben im Kinderzimmer, brennt ein winziges Licht.</p><p><i>Du bist frei. Aber Lena wartet noch immer.</i></p>` },
     frieden: { n: 4, t: 'Lenas Frieden', x: () => `<p>„<b>Lena</b>.“</p><p>Dein Flüstern hallt durch das ganze Haus. Es holt tief Luft. Zwischen den Dielen, in den Wänden, im Dach – ein Seufzen wie von jemandem, der lange gewartet hat.</p><p>Eine kleine, warme Hand schiebt sich in deine. Du siehst sie nicht, aber du spürst ihr Lachen. Und jetzt erinnerst du dich: Ihr habt Verstecken gespielt. Du hast gezählt, bist müde geworden und hast aufgehört zu suchen. Es war nie deine Schuld – nur ein Kind, das eingeschlafen ist.</p><p>Die Haustür schwingt auf. Sonnenlicht. Die Hand lässt los, und für einen Augenblick tanzen zwei Schatten über die Schwelle – dann ist da nur noch Licht. Das Haus knackt ein letztes Mal und schläft ein.</p><p><i>Du hast sie endlich gefunden. Und sie dich.</i></p>` },
     bleiben: { n: 5, t: 'Für immer zu Hause', x: () => `<p>Du lässt die Klinke los und setzt dich auf die unterste Treppenstufe. Das Haus fühlt sich plötzlich warm an. Oben gehen Schritte, ein Lachen, eine Spieluhr.</p><p>Die Türen stehen offen, aber niemand geht hinaus. Draußen vergehen Jahre. Im Wohnzimmer hängt ein neues Gemälde: ein Mann, eine Frau, ein kleines Mädchen mit Zöpfen – und du, mit ernstem Blick.</p><p><i>Du bist wieder zu Hause. Für immer.</i></p>` },
+    verschlungen: { n: 7, t: 'Verschlungen', x: () => `<p>Zum dritten Mal schließen sich kalte Finger um dich. Diesmal wachst du nicht im Schlafzimmer auf.</p><p>Es wird warm, und still, und du begreifst, wie das Haus all die Jahre überlebt hat: von denen, die geblieben sind. Deine Schritte werden zu Dielen, die knarren. Dein Atem wird zum Luftzug im Flur.</p><p>Jahre später zieht eine Familie ein, streicht die Wände, hängt Bilder auf. Nachts um 3:07 Uhr wacht jemand auf und hört Schritte im Flur. Langsam. Regelmäßig. Und vor der Tür: ein Atmen.</p><p><i>Du bist jetzt das, wovor du dich versteckt hast.</i></p>` },
+    spiegel: { n: 8, t: 'Hinter dem Spiegel', x: () => `<p>Du legst deine Hand auf ihre. Das Glas gibt nach wie kaltes Wasser. Lena lächelt, zum ersten Mal richtig, und ihre Finger schließen sich um deine. „Danke“, flüstert sie. „Jetzt darf ich gehen.“</p><p>Dann ist da ein sanfter, unwiderstehlicher Zug – und du stehst auf der anderen Seite des Glases. Durch das staubige Dachfenster siehst du ein kleines Mädchen mit Zöpfen durch den Garten laufen, endlich, lachend, hinein in die Morgensonne.</p><p>Dann ist es still. Du setzt dich auf die unterste Stufe, und irgendwo im Haus schlägt eine Uhr. Jemand muss warten, bis wieder jemand kommt.</p><p><i>Jetzt bist du es.</i></p>` },
     behaelt: { n: 6, t: 'Das Haus behält dich', x: () => `<p>Es ist <b>3:07 Uhr</b>. Im Wohnzimmer schlägt die Standuhr – obwohl sie stillstand. Alle Türen fallen gleichzeitig zu. ${S && has('light') ? 'Die Taschenlampe flackert und erlischt.' : 'Die Dunkelheit wird dichter.'}</p><p>Hinter dir atmet etwas. Du drehst dich nicht um. Du kennst das Haus jetzt gut genug, um zu wissen, dass es nicht mehr wartet.</p><p><i>Um 3:07 Uhr hört das Haus auf zu warten. Und beginnt, dich zu behalten.</i></p>` }
   };
   const loadEnds = () => { try { return JSON.parse(localStorage.getItem('haus-enden') || '[]'); } catch (e) { return []; } };
   function ending(id, variant) {
     if (S.over) return;
-    S.over = true; closeModal();
-    const e = ENDS[id], found = loadEnds();
+    S.over = true; closeModal(); clearTimeout(encTO); S.enc = false; $('enc').classList.add('hidden'); $('black').classList.remove('on'); applyFear();
+    const e = ENDS[id], found = loadEnds(), N = Object.keys(ENDS).length;
     if (!found.includes(id)) { found.push(id); try { localStorage.setItem('haus-enden', JSON.stringify(found)); } catch (x) {} }
-    sfx[id === 'behaelt' || id === 'bleiben' ? 'scare' : 'got']();
-    $('ebox').innerHTML = `<div class="no">Ende ${e.n} von 6</div><h1>${e.t}</h1>${e.x(variant)}
-      <p class="dim" style="text-align:center">Gegenstände: ${Object.keys(S.inv).length} von 5 · Enden entdeckt: ${found.length} von 6</p>
+    sfx[['behaelt', 'bleiben', 'verschlungen'].includes(id) ? 'scare' : 'got']();
+    $('ebox').innerHTML = `<div class="no">Ende ${e.n} von ${N}</div><h1>${e.t}</h1>${e.x(variant)}
+      <p class="dim" style="text-align:center">Gegenstände: ${Object.keys(S.inv).length} von 5 · Enden entdeckt: ${found.length} von ${N}</p>
       <div style="text-align:center"><button class="btn" id="again">Noch einmal</button></div>`;
     $('end').classList.remove('hidden');
     $('again').onclick = () => { $('end').classList.add('hidden'); newGame(); };
   }
 
+  // ---------- Atmosphäre ----------
+  const gc = $('grain'), gx = gc.getContext('2d'); gc.width = 160; gc.height = 100;
+  const gimg = gx.createImageData(160, 100);
+  setInterval(() => { const d = gimg.data; for (let i = 0; i < d.length; i += 4) { d[i] = d[i + 1] = d[i + 2] = Math.random() * 255; d[i + 3] = 255; } gx.putImageData(gimg, 0, 0); }, 120);
+  function spawnEyes() {
+    const e = document.createElement('div'); e.className = 'eyes';
+    e.style.left = (8 + Math.random() * 84) + '%'; e.style.top = (20 + Math.random() * 55) + '%';
+    $('fx').appendChild(e);
+    setTimeout(() => { e.classList.add('gone'); setTimeout(() => e.remove(), 200); }, 2600 + Math.random() * 1500);
+  }
+  function eyesCheck(x, y) {
+    for (const e of $('fx').querySelectorAll('.eyes:not(.gone)')) {
+      const r = e.getBoundingClientRect();
+      if (Math.hypot(r.left + 17 - x, r.top + 5 - y) < 90) { e.classList.add('gone'); sfx.whisper(); setTimeout(() => e.remove(), 200); }
+    }
+  }
+  function glimpse() {
+    const g = document.createElement('div'); g.className = 'glimpse'; g.innerHTML = FIG; g.firstChild.style.height = '100%';
+    g.style.left = (Math.random() < .5 ? 4 + Math.random() * 20 : 72 + Math.random() * 20) + '%';
+    $('fx').appendChild(g); noise(.4, 700, 1, .15); setTimeout(() => g.remove(), 380);
+  }
+  function lightsOut() {
+    const sc = $('scene'); sc.classList.add('lo'); snd(90, .3, 'sawtooth', .1, -40);
+    setTimeout(() => { sc.classList.remove('lo'); if (fearV > .45 && Math.random() < .7) glimpse(); }, 350 + Math.random() * 450);
+  }
+  let nextLO = 30, nextEyes = 8;
+  setInterval(() => {
+    if (!S || S.over || S.enc || !$('title').classList.contains('hidden')) return;
+    nextLO--; nextEyes--;
+    if (nextLO <= 0) { lightsOut(); nextLO = 25 + Math.random() * 25 - fearV * 10; }
+    if (nextEyes <= 0) { if (R[S.room].dark || fearV > .5) spawnEyes(); nextEyes = 5 + Math.random() * 8 - fearV * 3; }
+    if (fearV > .3 && Math.random() < .05) sfx.whisper();
+    if (fearV > .5 && Math.random() < .03) sfx.creak();
+  }, 1000);
+
   // ---------- Start ----------
   function newGame() {
-    S = { room: 'schlaf', steps: 0, inv: {}, flags: {}, seen: {}, fired: {}, log: [], over: false, code: [0, 0, 0] };
+    S = { room: 'schlaf', steps: 0, inv: {}, flags: {}, seen: {}, fired: {}, log: [], over: false, code: [0, 0, 0], lives: 3, charges: 0, hideUsed: {}, enc: false, g: { on: false, room: 'dach', cd: 0, mv: 0, lastD: 9, encs: 0 } };
+    fearV = 0; $('fx').innerHTML = ''; $('black').classList.remove('on'); clearTimeout(beatTimer); beatLoop();
     say('Du wachst auf. Staub in der Nase, Kälte in den Knochen. Das Letzte, woran du dich erinnerst, ist ein Regenabend, eine Landstraße und ein Haus, in dem noch Licht brannte. Jetzt ist es dunkel – und still. Nirgends tickt eine Uhr.');
     say(`<b>${R.schlaf.name}.</b> ${R.schlaf.desc(0)}`);
     sizeUnit(); render();
   }
   function showTitle() {
     const n = loadEnds().length;
-    $('found').textContent = n ? `Enden entdeckt: ${n} von 6` : '';
+    $('found').textContent = n ? `Enden entdeckt: ${n} von ${Object.keys(ENDS).length}` : '';
   }
-  $('startBtn').onclick = () => { $('title').classList.add('hidden'); newGame(); sfx.creak(); };
+  $('startBtn').onclick = () => { audioInit(); $('title').classList.add('hidden'); newGame(); sfx.creak(); };
   showTitle();
 })();
 </script>
