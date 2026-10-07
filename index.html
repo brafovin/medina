@@ -1,524 +1,588 @@
-<!-- brafo:auto-index from game.html -->
+<!-- brafo:auto-index from haus.html -->
 <!doctype html>
 <html lang="de">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<title>Sternenfänger</title>
+<title>Das verlassene Haus</title>
 <style>
-  html,body{margin:0;height:100%;background:#0f172a;color:#f8fafc;font-family:-apple-system,system-ui,sans-serif;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
-  canvas{display:block;width:100vw;height:100vh}
-  #ui{position:fixed;inset:0;display:grid;place-items:center;text-align:center;background:rgba(15,23,42,.8);padding:24px;overflow:auto}
-  #ui.hidden{display:none}
-  h1{font-size:clamp(32px,7vw,64px);margin:0 0 8px}
-  p{margin:6px 0;opacity:.85}
-  .legend{display:grid;grid-template-columns:auto auto;gap:4px 18px;justify-content:center;text-align:left;font-size:14px;margin:14px auto}
-  .legend b{display:inline-block;width:20px;height:20px;line-height:20px;border-radius:50%;text-align:center;color:#0f172a;margin-right:6px;font-size:12px}
-  button{font-family:inherit;cursor:pointer}
-  #start{margin-top:14px;font-size:20px;padding:12px 32px;border:0;border-radius:999px;background:#facc15;color:#0f172a;font-weight:700}
-  #start:hover{background:#fde047}
-  a{color:#94a3b8;font-size:14px;display:inline-block;margin-top:16px}
-  #btns{position:fixed;top:10px;left:50%;transform:translateX(-50%);display:flex;gap:8px}
-  #btns button{width:38px;height:38px;border-radius:50%;border:1px solid #334155;background:rgba(15,23,42,.6);color:#f8fafc;font-size:16px}
+  :root{--bg:#0b0a10;--panel:#14121c;--line:#2a2638;--txt:#e7e3ef;--dim:#8d87a0;--gold:#facc15;--red:#f87171}
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:var(--bg);color:var(--txt);font-family:Georgia,'Times New Roman',serif}
+  button{font-family:inherit;cursor:pointer;color:inherit}
+  #app{max-width:860px;margin:0 auto;padding:10px;display:flex;flex-direction:column;gap:10px;min-height:100vh}
+  #hud{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;justify-content:space-between;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+  .ttl{font-weight:700;letter-spacing:.5px}
+  #inv{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .slot{width:38px;height:38px;border-radius:8px;border:1px solid var(--line);background:#0e0c14;font-size:20px;display:grid;place-items:center;padding:0}
+  .slot.empty{opacity:.35;filter:grayscale(1)}
+  .slot.hint{border-color:#6d5bd0}
+  #code{font:600 13px ui-monospace,monospace;color:var(--dim);margin-left:6px}
+  .right{display:flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums}
+  #clock{font-weight:700}
+  #clock.late{color:var(--red)}
+  #mute{background:none;border:1px solid var(--line);border-radius:50%;width:32px;height:32px}
+  #scene{position:relative;height:clamp(240px,46vh,420px);border-radius:12px;overflow:hidden;border:1px solid var(--line);
+    background:linear-gradient(to bottom,rgba(0,0,0,.45),rgba(0,0,0,0) 35%),linear-gradient(to bottom,var(--wall) 0 68%,var(--floor) 68% 100%);--mx:50%;--my:50%;--u:3px}
+  #scene::before{content:'';position:absolute;left:0;right:0;top:68%;height:3px;background:rgba(0,0,0,.45)}
+  #stage{position:absolute;inset:0;animation:flick 5s infinite}
+  @keyframes flick{0%,100%{opacity:1}47%{opacity:1}48%{opacity:.88}50%{opacity:1}83%{opacity:.94}}
+  .it{position:absolute;transform:translate(-50%,-50%);font-size:calc(var(--s)*var(--u));line-height:1;text-align:center;user-select:none;background:none;border:0;padding:0;text-shadow:0 4px 10px rgba(0,0,0,.6)}
+  .it small{display:block;font:11px/1.1 system-ui,sans-serif;color:#d8d2e8;text-shadow:0 1px 3px #000;margin-top:3px;white-space:nowrap}
+  button.it:hover{filter:drop-shadow(0 0 10px #facc15) brightness(1.2);transform:translate(-50%,-50%) scale(1.08)}
+  .it.go small{color:#a5b4fc}
+  .it.shake{animation:shake .5s infinite}
+  @keyframes shake{0%,100%{rotate:0deg}25%{rotate:-10deg}75%{rotate:10deg}}
+  .scrawl{position:absolute;transform:translate(-50%,-50%) rotate(-4deg);font:700 calc(var(--u)*5) 'Segoe Script','Comic Sans MS',cursive;color:#fca5a5;opacity:.85;text-shadow:0 0 6px #7f1d1d;white-space:nowrap;pointer-events:none}
+  #tint{position:absolute;inset:0;background:#7f1d1d;opacity:var(--ta,0);pointer-events:none;mix-blend-mode:multiply}
+  #dark{position:absolute;inset:0;pointer-events:none;display:grid;place-items:center;text-align:center;color:#6b6580;font-style:italic;padding:20px;
+    background:radial-gradient(ellipse at center,rgba(0,0,0,0) 45%,rgba(0,0,0,.6))}
+  #scene.torch #dark{background:radial-gradient(circle 150px at var(--mx) var(--my),rgba(0,0,0,0) 0,rgba(0,0,0,.25) 60%,rgba(0,0,0,.97) 100%)}
+  #scene.blackout #dark{background:#000}
+  #scene.glitch{animation:glitch .7s}
+  @keyframes glitch{0%{filter:none}15%{filter:hue-rotate(90deg) saturate(2);transform:translateX(-4px)}30%{filter:invert(.15);transform:translateX(5px)}60%{filter:brightness(.4)}100%{filter:none;transform:none}}
+  #rname{position:absolute;left:12px;top:8px;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#cfc8e0;text-shadow:0 1px 4px #000;pointer-events:none;z-index:2}
+  #log{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;height:clamp(130px,22vh,200px);overflow-y:auto;line-height:1.5;font-size:16px}
+  #log p{margin:0 0 8px}
+  #log p:last-child{animation:fade .6s}
+  #log p.old{opacity:.55}
+  #log p.chg{color:#c4b5fd;font-style:italic}
+  #log p.ev{color:var(--dim);font-style:italic}
+  #log p.got{color:var(--gold)}
+  #log b{color:#fff}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}}
+  #acts{display:flex;flex-direction:column;gap:8px}
+  .grp{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .grp>span{font:12px system-ui,sans-serif;color:var(--dim);text-transform:uppercase;letter-spacing:1px;min-width:92px}
+  #acts button{background:#1b1827;border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:14px}
+  #acts button:hover{border-color:#6d5bd0;background:#242035}
+  #acts button.go{border-color:#334;background:#171a2b}
+  #modal,#end,#title{position:fixed;inset:0;background:rgba(5,4,9,.88);display:grid;place-items:center;padding:18px;z-index:10;overflow:auto}
+  .hidden{display:none!important}
+  .box{max-width:520px;width:100%;background:#17141f;border:1px solid #3a3450;border-radius:14px;padding:22px;line-height:1.55}
+  .box h2{margin:0 0 10px}
+  .box p{margin:8px 0}
+  .paper{background:#e8dcc0;color:#3b2f20;padding:16px 18px;border-radius:4px;font-style:italic;box-shadow:0 6px 18px rgba(0,0,0,.5)}
+  mark{background:#facc15;color:#000;padding:0 4px;border-radius:3px;font-style:normal;font-weight:700}
+  .btn{display:inline-block;margin:8px 8px 0 0;padding:10px 20px;border-radius:999px;border:0;background:var(--gold);color:#111;font-weight:700;font-size:15px}
+  .btn.alt{background:#2a2638;color:var(--txt);border:1px solid #433c5c}
+  .digits{display:flex;gap:14px;justify-content:center;margin:14px 0}
+  .dg{display:flex;flex-direction:column;align-items:center;gap:4px}
+  .dg button{width:52px;height:32px;border-radius:8px;border:1px solid #433c5c;background:#2a2638}
+  .dg div{width:52px;height:60px;display:grid;place-items:center;font:700 34px ui-monospace,monospace;background:#000;border-radius:8px;border:1px solid #433c5c;color:var(--gold)}
+  .err{color:var(--red);min-height:1.4em;text-align:center}
+  #title .box,#end .box{max-width:600px;text-align:center}
+  #title h1{font-size:clamp(30px,7vw,52px);margin:4px 0 10px}
+  #end .box{text-align:left}
+  #end h1{margin:4px 0;text-align:center;font-size:clamp(26px,6vw,42px)}
+  #end .no{text-align:center;color:var(--dim);font:13px system-ui,sans-serif;letter-spacing:2px;text-transform:uppercase}
+  .dim{color:var(--dim);font-size:14px}
+  a{color:#94a3b8;font:14px system-ui,sans-serif}
+  @media(max-width:560px){.grp>span{min-width:100%}}
 </style>
 </head>
 <body>
-<canvas id="c"></canvas>
-<div id="btns"><button id="bSnd" title="Sound (M)">🔊</button><button id="bPause" title="Pause (P)">⏸</button></div>
-<div id="ui">
-  <div>
-    <h1 id="title">Sternenfänger</h1>
-    <p id="msg">Ballere Asteroiden weg, sammle ⭐ und besiege die Bosse!</p>
-    <div class="legend">
-      <span><b style="background:#38bdf8">S</b>Schild</span>
-      <span><b style="background:#f472b6">T</b>Dreifach-Schuss</span>
-      <span><b style="background:#fb923c">R</b>Schnellfeuer</span>
-      <span><b style="background:#a78bfa">M</b>Magnet für Sterne</span>
-      <span><b style="background:#f87171">B</b>Bombe</span>
-      <span><b style="background:#4ade80">♥</b>Extra-Leben</span>
-    </div>
-    <p>Bewegen: Pfeiltasten / WASD, Maus oder Finger ziehen · Feuer: automatisch<br>
-       P = Pause · M = Sound</p>
-    <p>Sterne hintereinander sammeln erhöht den Punkte-Multiplikator (bis x5). Ein Treffer setzt ihn zurück.</p>
-    <p id="best"></p>
-    <button id="start">Spielen</button><br>
+<div id="app">
+  <header id="hud">
+    <div class="ttl">🏚️ Das verlassene Haus</div>
+    <div id="inv"></div>
+    <div class="right"><span id="clock">🕰 23:00</span><button id="mute" title="Sound">🔊</button></div>
+  </header>
+  <div id="scene"><div id="rname"></div><div id="stage"></div><div id="tint"></div><div id="dark"></div></div>
+  <div id="log"></div>
+  <div id="acts"></div>
+</div>
+
+<div id="modal" class="hidden"><div class="box" id="mbox"></div></div>
+
+<div id="end" class="hidden"><div class="box" id="ebox"></div></div>
+
+<div id="title">
+  <div class="box">
+    <h1>Das verlassene Haus</h1>
+    <p>Du wachst auf – allein, in einem Haus, das seit Jahren leer steht. Die Türen sind verschlossen, die Uhr ist stehen geblieben.</p>
+    <p>Finde <b>5 Gegenstände</b>, um wieder hinauszukommen. Aber sei vorsichtig: Das Haus verändert sich, wenn du nicht hinsiehst … und die Zeit läuft.</p>
+    <p class="dim">Klicke auf Dinge im Raum oder nutze die Knöpfe darunter. Es gibt <b>6 verschiedene Enden</b>.</p>
+    <p class="dim" id="found"></p>
+    <button class="btn" id="startBtn">Betreten</button><br>
     <a href="index.html">← Startseite</a>
   </div>
 </div>
+
 <script>
 (() => {
-  const cv = document.getElementById('c'), ctx = cv.getContext('2d');
-  const ui = document.getElementById('ui'), title = document.getElementById('title');
-  const msg = document.getElementById('msg'), bestEl = document.getElementById('best');
-  const startBtn = document.getElementById('start');
-  let W, H, dpr;
-  function resize() {
-    dpr = window.devicePixelRatio || 1;
-    W = innerWidth; H = innerHeight;
-    cv.width = W * dpr; cv.height = H * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-  addEventListener('resize', resize); resize();
-
-  const rnd = (a, b) => a + Math.random() * (b - a);
-  const TAU = Math.PI * 2;
-
-  // ---------- Highscore ----------
-  let best = 0;
-  try { best = +localStorage.getItem('sternenfaenger-best') || 0; } catch (e) {}
-  const showBest = () => bestEl.textContent = best ? 'Highscore: ' + best : '';
-  showBest();
+  const $ = id => document.getElementById(id);
+  const MAX = 140;               // Schritte bis 3:07 Uhr
+  const CODE = [3, 0, 7];
+  const ITEMS = {
+    key:    { e: '🗝️', n: 'Rostiger Schlüssel', d: 'Ein alter Schlüssel an einem verblichenen blauen Band. Er passt in Schlösser, die lange niemand geöffnet hat.' },
+    light:  { e: '🔦', n: 'Taschenlampe', d: 'Schwer, aus Metall. Der Lichtkegel ist gelb, aber er hält.' },
+    diary:  { e: '📖', n: 'Tagebuchseite' },
+    photo:  { e: '🖼️', n: 'Zerrissenes Foto' },
+    letter: { e: '✉️', n: 'Brief' }
+  };
+  const HINTS = ['diary', 'photo', 'letter'];
+  const READ = {
+    diary: `<p class="paper">3. Oktober.<br><br>Ich habe das Haus abgeschlossen und werde es nie wieder betreten. Seit jener Nacht um 3:07 Uhr, als Lena verschwand, ist hier nichts mehr, wie es war. Das Kind fragt nicht mehr nach ihr. Vielleicht ist das besser.<br><br>Ich sichere die Haustür mit einem Zahlenschloss und verteile den Code auf drei Orte, damit ihn niemand allein findet. Der erste Teil, hier: die <mark>DREI</mark>.<br><br>– M.</p>`,
+    photo: `<p>Zwei Kinder auf einer Schaukel im Garten, mitten im Lachen. Das Foto ist in der Mitte zerrissen – neben dem lachenden Mädchen mit den Zöpfen ist ein leerer Platz. <i>Dein</i> Platz.</p><p class="paper">Auf der Rückseite, in Kinderschrift: „Lena &amp; ich – für immer.“<br>Darunter, in Mamas Schrift: „Zweiter Teil des Codes: <mark>NULL</mark>. Ein Kreis hat kein Ende.“</p>`,
+    letter: `<p class="paper">Liebes Geschwisterchen,<br><br>ich bin nicht weggelaufen. Wir haben Verstecken gespielt, und ich habe mich so gut versteckt, dass du mich nicht mehr gefunden hast. Dann bist du eingeschlafen und ich konnte nicht mehr zurück.<br><br>Das Haus hält mich fest, weil ich noch darauf warte, dass du <i>mich</i> rufst. Wenn du das hier liest: Geh nicht einfach. Ruf meinen Namen an der Tür, dann darf ich auch gehen.<br><br>Der letzte Teil des Codes: <mark>SIEBEN</mark>. So alt war ich.<br><br>Deine Lena</p>`
+  };
 
   // ---------- Sound ----------
   let AC = null, muted = false;
-  function snd(f, d = .1, type = 'square', v = .04, slide = 0) {
+  function snd(f, d = .1, type = 'sine', v = .05, slide = 0, delay = 0) {
     if (muted) return;
     try {
       AC = AC || new (window.AudioContext || window.webkitAudioContext)();
-      const o = AC.createOscillator(), g = AC.createGain(), n = AC.currentTime;
+      const o = AC.createOscillator(), g = AC.createGain(), n = AC.currentTime + delay;
       o.type = type; o.frequency.setValueAtTime(f, n);
-      if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f + slide), n + d);
+      if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(25, f + slide), n + d);
       g.gain.setValueAtTime(v, n); g.gain.exponentialRampToValueAtTime(.0001, n + d);
-      o.connect(g); g.connect(AC.destination); o.start(); o.stop(n + d);
+      o.connect(g); g.connect(AC.destination); o.start(n); o.stop(n + d);
     } catch (e) {}
   }
-  const bSnd = document.getElementById('bSnd'), bPause = document.getElementById('bPause');
-  function toggleSound() { muted = !muted; bSnd.textContent = muted ? '🔇' : '🔊'; }
-  bSnd.onclick = toggleSound;
-  bPause.onclick = () => togglePause();
-  document.getElementById('btns').addEventListener('pointerdown', e => e.stopPropagation());
-
-  // ---------- Eingabe ----------
-  const keys = {};
-  let target = null;
-  addEventListener('keydown', e => {
-    const k = e.key.toLowerCase();
-    keys[k] = true;
-    if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) e.preventDefault();
-    if ((k === ' ' || k === 'enter') && !running) start();
-    if (k === 'p' || k === 'escape') togglePause();
-    if (k === 'm') toggleSound();
-  });
-  addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
-  const point = e => { target = { x: e.clientX, y: e.clientY - (e.pointerType === 'touch' ? 70 : 0) }; };
-  addEventListener('pointermove', e => { if (e.pointerType !== 'mouse' || running) point(e); });
-  addEventListener('pointerdown', point);
-  addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') target = null; });
-  document.addEventListener('visibilitychange', () => { if (document.hidden && running) setPause(true); });
+  const sfx = {
+    step: () => snd(80, .15, 'sine', .09, -35),
+    creak: () => snd(130, .7, 'sawtooth', .025, -60),
+    got: () => [523, 659, 784].forEach((f, i) => snd(f, .25, 'triangle', .05, 0, i * .1)),
+    ring: () => [0, .25, .5, .75].forEach(d => { snd(880, .12, 'square', .03, 0, d); snd(700, .12, 'square', .03, 0, d + .12); }),
+    scare: () => snd(55, 1.2, 'sawtooth', .08, -20),
+    click: () => snd(300, .05, 'square', .03)
+  };
+  $('mute').onclick = () => { muted = !muted; $('mute').textContent = muted ? '🔇' : '🔊'; };
 
   // ---------- Zustand ----------
-  const PUPS = {
-    S: { c: '#38bdf8', label: 'S' }, T: { c: '#f472b6', label: 'T' }, R: { c: '#fb923c', label: 'R' },
-    M: { c: '#a78bfa', label: 'M' }, B: { c: '#f87171', label: 'B' }, H: { c: '#4ade80', label: '♥' }
+  let S = null, cur = [];
+  const has = k => !!S.inv[k];
+  const hints = () => HINTS.filter(has).length;
+  const clockMin = () => 1380 + S.steps * (247 / MAX);
+  function ver(id) { const th = R[id].th || []; return th.filter(t => S.steps >= t[0]).length; }
+
+  function say(t, c = '') {
+    S.log.push({ t, c });
+    renderLog();
+  }
+  function renderLog() {
+    const L = $('log');
+    L.innerHTML = S.log.slice(-8).map((m, i, a) => `<p class="${m.c} ${i < a.length - 1 ? 'old' : ''}">${m.t}</p>`).join('');
+    L.scrollTop = L.scrollHeight;
+  }
+
+  const EVENTS = [
+    { at: 6,   t: 'Irgendwo im Haus schlägt eine Tür zu.', s: () => sfx.creak() },
+    { at: 18,  t: 'Ein leises Kinderlachen. Du hältst den Atem an – Stille.', s: () => sfx.scare() },
+    { at: 45,  t: 'Hinter dir knarren die Dielen. Du drehst dich um. Nichts.', s: () => sfx.creak() },
+    { at: 62,  t: 'Es riecht plötzlich nach Kerzenwachs und kaltem Rauch.' },
+    { at: 100, t: 'Die Luft wird dünn. Es ist, als würde das Haus ungeduldig werden. Bald ist es drei.', s: () => sfx.scare() },
+    { at: 125, t: 'Die Wände scheinen näher zu rücken. Du hörst ein leises Ticken – von der Standuhr, die doch stillsteht.', s: () => sfx.scare() }
+  ];
+
+  function updateHUD() {
+    const m = Math.floor(clockMin()) % 1440;
+    const c = $('clock');
+    c.textContent = '🕰 ' + String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+    c.classList.toggle('late', S.steps > MAX * .75);
+    $('scene').style.setProperty('--ta', Math.min(.35, S.steps / MAX * .35));
+    let h = '';
+    for (const k in ITEMS) {
+      const isH = HINTS.includes(k);
+      h += `<button class="slot ${has(k) ? '' : 'empty'} ${isH ? 'hint' : ''}" data-k="${k}" title="${has(k) ? ITEMS[k].n : '???'}">${has(k) ? ITEMS[k].e : '❔'}</button>`;
+    }
+    const d = i => [S.inv.diary, S.inv.photo, S.inv.letter][i] ? CODE[i] : '?';
+    if (hints()) h += `<span id="code">Code: ${d(0)}·${d(1)}·${d(2)}</span>`;
+    $('inv').innerHTML = h;
+  }
+
+  function tick() {
+    updateHUD();
+    for (const ev of EVENTS) if (!S.fired[ev.at] && S.steps >= ev.at) { S.fired[ev.at] = 1; say(ev.t, 'ev'); ev.s && ev.s(); }
+    checkChanges();
+    if (S.steps >= MAX && !S.over) ending('behaelt');
+  }
+  function cost(n = 1) { S.steps += n; tick(); }
+
+  function glitch() { const s = $('scene'); s.classList.remove('glitch'); void s.offsetWidth; s.classList.add('glitch'); }
+  function checkChanges() {
+    const th = R[S.room].th || [], v = ver(S.room), last = S.seen[S.room] || 0;
+    if (v > last) {
+      for (let i = last; i < v; i++) say('⚠ ' + th[i][1], 'chg');
+      S.seen[S.room] = v; sfx.creak(); glitch();
+    }
+  }
+
+  // ---------- Hilfsfunktionen für Räume ----------
+  const hot = (l, e, x, y, s, run, o = {}) => ({ k: 'look', l, e, x, y, s, run, ...o });
+  const exit = (to, l, x, y, o = {}) => ({
+    k: 'go', l, e: o.e || '🚪', x, y, s: o.s || 22,
+    run() {
+      if (o.ok && !o.ok()) { say(o.why); return; }
+      if (o.pre && !S.flags['pre_' + to]) { S.flags['pre_' + to] = 1; say(o.pre); }
+      go(to);
+    }
+  });
+  const L = txt => () => { say(txt); cost(); render(); };
+  function give(k) { S.inv[k] = 1; sfx.got(); say(`<b>${ITEMS[k].e} ${ITEMS[k].n}</b> gefunden!`, 'got'); updateHUD(); if (HINTS.includes(k)) reader(k); }
+
+  // ---------- Räume ----------
+  const R = {
+    schlaf: {
+      name: 'Schlafzimmer', wall: '#3b2f35', floor: '#241a1d',
+      th: [[50, 'Auf dem Bett sitzt jetzt ein kleiner Teddybär. Das war vorhin nicht so.']],
+      desc: () => 'Ein großes Schlafzimmer. Das Bett ist ungemacht, die Vorhänge hängen in Fetzen. Durch das vergitterte Fenster fällt fahles Mondlicht. Eine Tür führt hinaus in den Flur.',
+      deco: v => v >= 1 ? [{ e: '🧸', x: 26, y: 52, s: 9 }] : [],
+      hot: v => [
+        hot('Bett', '🛏️', 30, 62, 30, L('In der Matratze ist eine Kuhle – deine. Das Kissen riecht nach Staub und etwas Vertrautem, das du nicht benennen kannst.')),
+        hot('Kommode', '🗄️', 62, 64, 20, () => {
+          if (!S.flags.zettel) { S.flags.zettel = 1; say('In der obersten Schublade liegt ein Zettel in Kinderschrift: <i>„Such zuerst, wo es einmal warm war.“</i> Der Rest ist abgerissen.'); }
+          else say('Außer dem Zettel ist die Kommode leer.');
+          cost(); render();
+        }),
+        hot('Fenster', '🪟', 82, 30, 20, L(v >= 1
+          ? 'Im Nebel steht eine kleine Gestalt neben dem Schaukelgerüst. Sie dreht den Kopf zu dir – du weichst zurück. Als du wieder hinsiehst, schwingt nur die leere Schaukel.'
+          : 'Die Gitterstäbe sind kalt und fest verschraubt. Draußen: Nebel, ein verwilderter Garten und ein altes Schaukelgerüst.')),
+        exit('flur', 'Zum Flur', 10, 58, { s: 28 })
+      ]
+    },
+
+    flur: {
+      name: 'Flur', wall: '#34303a', floor: '#241f1d',
+      th: [[40, 'Das Telefon klingelt – obwohl die Leitung tot sein müsste.'], [100, 'Von der Haustür kommt ein dumpfes Klopfen. Dreimal. Dann Stille.']],
+      desc: () => 'Ein langer Flur, die Tapete löst sich in Streifen. Türen führen zum Schlafzimmer, Wohnzimmer, zur Küche und zum Bad. Eine Treppe führt nach oben ins Dunkel, daneben liegt eine schwere Tür zum Keller. Die Haustür trägt ein Zahlenschloss.',
+      deco: () => [],
+      hot: v => [
+        exit('schlaf', 'Schlafzimmer', 8, 50, { s: 20 }),
+        exit('wohn', 'Wohnzimmer', 22, 50, { s: 20 }),
+        exit('kueche', 'Küche', 36, 50, { s: 20 }),
+        exit('bad', 'Bad', 50, 50, { s: 20 }),
+        exit('keller', 'Kellertür', 63, 50, {
+          e: '🕳️', s: 18, ok: () => has('key'),
+          why: 'Die Kellertür ist verschlossen. Das Schloss ist alt und rostig – hier passt nur ein ganz bestimmter Schlüssel.',
+          pre: 'Der rostige Schlüssel dreht sich knirschend im Schloss. Kalte, feuchte Luft strömt dir entgegen.'
+        }),
+        exit('kinder', 'Treppe nach oben', 76, 50, {
+          e: '🪜', s: 20, ok: () => has('light'),
+          why: 'Die Treppe nach oben liegt in völliger Dunkelheit. Ohne Licht würdest du schon auf der ersten Stufe stolpern.',
+          pre: 'Dein Lichtkegel tastet die Stufen hinauf. Sie ächzen bei jedem Schritt.'
+        }),
+        hot('Haustür', '🚪', 91, 50, 26, () => openLock(), { cls: '' }),
+        hot('Telefon', '📞', 30, 80, 12, () => {
+          if (v < 1) say('Ein altes Wählscheibentelefon. Die Leitung ist tot – kein Ton.');
+          else if (!S.flags.phone) {
+            S.flags.phone = 1;
+            say('Du hebst ab. Rauschen, dann eine Kinderstimme, ganz leise: <i>„… hörst du mich? Such weiter oben … ich warte … unterm Dach …“</i> Klick. Die Leitung ist wieder tot.');
+            sfx.scare();
+          } else say('Nur noch Rauschen.');
+          cost(); render();
+        }, { cls: v >= 1 && !S.flags.phone ? 'shake' : '' }),
+        hot('Garderobe', '🧥', 52, 80, 14, L('Mäntel, die nach Mottenkugeln riechen. In einer Tasche steckt ein vergilbtes Bonbon. Du lässt es lieber liegen.'))
+      ]
+    },
+
+    wohn: {
+      name: 'Wohnzimmer', wall: '#3a3236', floor: '#2b2220',
+      th: [[20, 'Das Gemälde über dem Kamin … irgendetwas daran ist anders als vorhin.'], [70, 'Am Fenster steht jemand! Du erstarrst – dann bewegt sich nur der Vorhang. Da ist niemand.']],
+      desc: () => 'Ein weitläufiges Wohnzimmer. Möbel unter Laken, Mottenlöcher in den Vorhängen. Über dem Kamin hängt ein Familiengemälde, in der Ecke steht eine große Standuhr.',
+      deco: v => [{ e: '🪟', x: 82, y: 32, s: 20 }].concat(v >= 2 ? [{ e: '👤', x: 82, y: 34, s: 12, o: .55 }] : []),
+      hot: v => [
+        hot('Kamin', '🔥', 24, 66, 22, () => {
+          if (!has('key')) { say('Der Kamin ist kalt. Du greifst in die Asche – und deine Finger berühren etwas Hartes: ein Schlüssel!'); give('key'); }
+          else say('Nur kalte Asche.');
+          cost(); render();
+        }, { f: 'grayscale(1) brightness(.6)' }),
+        hot('Gemälde', '🖼️', 24, 30, 14, L(v === 0
+          ? 'Ein Familienporträt: ein Mann, eine Frau, ein Kind mit ernstem Blick – und ein kleines Mädchen mit Zöpfen, das lacht.'
+          : v === 1
+            ? 'Das Gesicht des kleinen Mädchens ist weggekratzt. Die Farbe darunter ist noch feucht.'
+            : 'Das Mädchen ist ganz verschwunden, nur ein heller Fleck bleibt. Und das Kind in der Mitte sieht jetzt direkt in deine Richtung.')),
+        hot('Standuhr', '🕰️', 50, 54, 26, () => {
+          S.flags.clock = 1;
+          say('Die Standuhr ist um <b>3:07 Uhr</b> stehen geblieben. Der Pendel hängt reglos. Du hast das Gefühl, dass diese Uhrzeit wichtig ist.');
+          cost(); render();
+        }),
+        hot('Bücherregal', '📚', 69, 56, 20, L('Märchenbücher, Kochbücher, ein Lexikon. Auf einem Buch steht in Kinderschrift: <i>„Hänsel und Gretel – für Lena“</i>.')),
+        hot('Sofa', '🛋️', 48, 82, 22, L('Unter dem Laken: Staub, Mäusekot, eine eingerollte Decke. Nichts Brauchbares.')),
+        exit('flur', 'Zum Flur', 92, 62, { s: 22 })
+      ]
+    },
+
+    kueche: {
+      name: 'Küche', wall: '#303a38', floor: '#222a27',
+      th: [[30, 'Die Küche riecht seltsam – nach frisch gekochtem Essen? Das ist unmöglich.'], [80, 'Alle Stühle sind jetzt umgekippt. Der Wasserhahn tropft nicht mehr. Die Stille drückt in deinen Ohren.']],
+      desc: () => 'Eine Küche wie aus einer anderen Zeit. Geschirr stapelt sich im Spülstein, ein Wasserhahn tropft – <i>drip … drip …</i> In der Ecke eine schwere Hintertür mit Riegel, dahinter wabert Nebel.',
+      deco: v => (v >= 1 ? [{ e: '🍲', x: 55, y: 60, s: 9 }] : []).concat(v >= 2 ? [{ e: '🪑', x: 70, y: 82, s: 12, r: 90 }, { e: '🪑', x: 40, y: 84, s: 12, r: -80 }] : []),
+      hot: v => [
+        hot('Küchenschrank', '🗄️', 20, 54, 22, () => {
+          if (!S.flags.keks) { S.flags.keks = 1; say('Teller, Tassen, eine Keksdose. In der Dose liegt ein Zettel: <i>„Der Keller gefällt Mama nicht. Aber dort ist alles, was wir versteckt haben.“</i>'); }
+          else say('Nur Geschirr. Die Keksdose ist leer.');
+          cost(); render();
+        }),
+        hot('Kühlschrank', '🧊', 36, 50, 22, L('Der Gestank lässt dich zurückweichen. Hinter einer Milchflasche aus einem anderen Jahrzehnt – nichts. Schnell zu.')),
+        hot('Tisch', '🍽️', 52, 74, 22, L(v === 0
+          ? 'Ein Tisch mit drei Stühlen, alle verstaubt. Zwei stehen eng beieinander, einer ist abgerückt.'
+          : v === 1
+            ? 'Der Tisch ist gedeckt – drei Teller, sauber, staubfrei. Einer davon ist noch warm.'
+            : 'Die drei Teller sind verschwunden, nur Kreidestriche auf der Tischplatte: sieben kleine Striche.')),
+        hot('Wasserhahn', '🚰', 66, 48, 14, L('Drip … drip … Das Wasser hat eine Rostspur in das Becken gegraben. Wer dreht das Wasser noch an?')),
+        hot('Hintertür', '🚪', 82, 52, 28, () => backDoor()),
+        exit('flur', 'Zum Flur', 8, 60, { s: 22 })
+      ]
+    },
+
+    bad: {
+      name: 'Badezimmer', wall: '#2f3a3e', floor: '#1f2a2c',
+      th: [[25, 'Der Spiegel ist beschlagen – von innen?'], [75, 'Auf dem Spiegel steht wieder etwas. Neue Schrift.']],
+      desc: () => 'Ein enges Bad mit gesprungenen Fliesen. Eine Wanne mit klarem Wasser, ein kleiner Medizinschrank und ein Spiegel über dem Waschbecken.',
+      deco: v => v === 1 ? [{ t: 'HINTER DIR', x: 40, y: 38 }] : v >= 2 ? [{ t: 'KOMM HOCH', x: 40, y: 38 }] : [],
+      hot: v => [
+        hot('Spiegel', '🪞', 40, 38, 26, L(v === 0
+          ? 'Dein Gesicht im staubigen Spiegel: blass, müde. Du wischst mit dem Ärmel – dahinter bist nur du. Noch.'
+          : v === 1
+            ? 'In Kinderschrift steht auf dem beschlagenen Glas: <i>HINTER DIR</i>. Du drehst dich um. Nichts. Als du zurückblickst, ist die Schrift verwischt.'
+            : 'Auf dem Glas steht: <i>KOMM HOCH</i>. Darunter malt jemand mit dem Finger einen kleinen Kreis.')),
+        hot('Wanne', '🛁', 68, 68, 28, L('Das Wasser in der Wanne ist eiskalt und klar – obwohl der Hahn trocken ist und das Haus seit Jahren leer steht. Du berührst es nicht.')),
+        hot('Medizinschrank', '💊', 18, 44, 14, L('Verstaubte Pillendosen, ein Päckchen Kinderpflaster mit Tiermotiven. Nichts, was dir hier raushilft.')),
+        exit('flur', 'Zum Flur', 92, 60, { s: 22 })
+      ]
+    },
+
+    keller: {
+      name: 'Keller', wall: '#222226', floor: '#141416', dark: true,
+      th: [[60, 'Hinter dir fällt ein Einmachglas aus dem Regal und zerspringt. Niemand ist hier. Oder?']],
+      desc: () => has('light')
+        ? 'Dein Lichtkegel gleitet über Steinwände, Einmachgläser, eine Werkbank und ein altes Fahrrad. In der Ecke steht eine Holzkiste mit dem Namen <b>LENA</b>.'
+        : 'Stockfinster. Es riecht nach feuchter Erde und altem Holz. Du tastest dich die Stufen hinab. Neben der Tür fühlen deine Finger ein Regal.',
+      hot: v => !has('light') ? [
+        hot('Regal ertasten', '🗄️', 50, 50, 20, () => {
+          say('Deine Hände gleiten über Holz, Dosen, Spinnweben – und dann über etwas Schweres, Kaltes, Rundes: eine <b>Taschenlampe</b>! Du schaltest sie ein.');
+          give('light'); say(R.keller.desc()); say('<i>Tipp: Der Lichtkegel folgt deinem Mauszeiger (oder Finger).</i>', 'ev'); cost(); render();
+        }),
+        exit('flur', 'Treppe hinauf', 10, 58, { e: '🪜' })
+      ] : [
+        hot('Werkbank', '🔧', 30, 62, 20, () => {
+          if (!has('diary')) { say('Unter einem Schraubstock klemmt eine vergilbte Seite aus einem Tagebuch.'); give('diary'); }
+          else say('Werkzeug, Nägel, Sägespäne. Nichts weiter.');
+          cost(); render();
+        }),
+        hot('Kiste „LENA“', '🧰', 58, 72, 18, L('Eine Holzkiste, beschriftet mit „LENA“. Das Vorhängeschloss ist verrostet und gibt nicht nach. Als du sie anhebst, klappert es leise darin – wie Murmeln.')),
+        hot('Einmachgläser', '🫙', 82, 46, 16, L('Pflaumen, „1994“. Dahinter an der Wand: sieben Kreidestriche. Jemand hat gezählt.')),
+        exit('flur', 'Treppe hinauf', 8, 58, { e: '🪜' })
+      ]
+    },
+
+    kinder: {
+      name: 'Kinderzimmer', wall: '#3a3548', floor: '#2a2433', dark: true,
+      th: [[35, 'Das Schaukelpferd bewegt sich. Ganz langsam. Vor und zurück.'], [90, 'Die Spieluhr spielt – von allein. Die Melodie bricht ab, sobald du hinsiehst.']],
+      desc: () => 'Ein Zimmer mit zwei kleinen Betten und Sternen auf der Tapete. Ein Schaukelpferd, eine Spielzeugkiste, eine Spieluhr auf der Fensterbank. In der Decke hängt eine Luke zum Dachboden mit einer Leiter.',
+      deco: () => [{ e: '⭐', x: 15, y: 18, s: 5 }, { e: '⭐', x: 35, y: 12, s: 4 }, { e: '⭐', x: 62, y: 20, s: 5 }, { e: '🌙', x: 88, y: 16, s: 8 }],
+      hot: v => [
+        hot('Spielzeugkiste', '📦', 20, 70, 20, () => {
+          if (!has('photo')) { say('Unter Bauklötzen und einer Stoffpuppe liegt ein zerrissenes Foto.'); give('photo'); }
+          else say('Bauklötze, eine Stoffpuppe mit nur einem Auge. Sie scheint dich anzusehen.');
+          cost(); render();
+        }),
+        hot('Schaukelpferd', '🐴', 42, 66, 22, L(v < 1 ? 'Ein hölzernes Schaukelpferd. Es steht still.' : 'Das Pferd wippt – langsam, vor und zurück. Obwohl kein Luftzug geht.'), { cls: v >= 1 ? 'shake' : '' }),
+        hot('Spieluhr', '🎵', 64, 46, 12, L('Du drehst an der Kurbel. Eine zerbrechliche Melodie, ein Schlaflied. In der Dunkelheit meinst du, jemanden mitsummen zu hören.')),
+        hot('Betten', '🛏️', 82, 68, 24, L('Zwei Betten. Über einem steht „Lena“. Über dem anderen hängt ein verblichenes Namensschild. Es ist dein Bett. Du weißt es plötzlich – und dir wird kalt.')),
+        hot('Dachbodenluke', '🪜', 50, 18, 14, () => {
+          if (!S.flags['pre_dach']) { S.flags['pre_dach'] = 1; say('Du ziehst an der Leiter. Staub rieselt herab. Du kletterst hinauf.'); }
+          go('dach');
+        }, { k: 'go' }),
+        exit('flur', 'Treppe hinunter', 8, 58)
+      ]
+    },
+
+    dach: {
+      name: 'Dachboden', wall: '#2c2a24', floor: '#1d1b17', dark: true,
+      th: [[110, 'Der Streifen Nebellicht durch die Dachluke ist erloschen. Es wird dunkler hier oben.']],
+      desc: () => 'Schräge Balken, Spinnweben wie Vorhänge. Alte Koffer, ein Schaukelstuhl und etwas Großes unter einem Laken. Durch eine Luke fällt ein Streifen Nebellicht.',
+      deco: () => [{ e: '🕸️', x: 12, y: 16, s: 14 }, { e: '🕸️', x: 90, y: 14, s: 12 }],
+      hot: v => [
+        hot('Koffer', '🧳', 30, 70, 22, () => {
+          if (!has('letter')) { say('Ein Lederkoffer mit zwei Schnallen. Kinderkleider, ein Stoffhase – und darunter ein Brief.'); give('letter'); }
+          else say('Kinderkleider, ein Stoffhase. Er lächelt schief.');
+          cost(); render();
+        }),
+        hot('Schaukelstuhl', '🪑', 58, 70, 22, L('Er wippt leicht. Auf der Lehne liegt ein rotes Zopfgummi.')),
+        hot('Laken', '👻', 80, 56, 22, L('Du ziehst das Laken weg: ein Standspiegel. Du siehst dich – und hinter dir ein kleines Mädchen mit Zöpfen. Du fährst herum. Niemand. Im Spiegel ist sie auch weg.')),
+        exit('kinder', 'Leiter hinab', 10, 50, { e: '🪜' })
+      ]
+    }
   };
-  const params = new URLSearchParams(location.search);
-  let running = false, paused = false;
-  let ship, rocks, enemies, bullets, ebullets, stars, pups, parts, boss, banner;
-  let score, lives, chain, level, levelT, t, flash, shake;
-  let rockT, starT, cometT, ufoT, last;
-  const mult = () => Math.min(5, 1 + Math.floor(chain / 5));
 
-  const bgStars = Array.from({ length: 90 }, () => ({ x: Math.random(), y: Math.random(), s: Math.random() * 1.6 + .3 }));
-
-  function start() {
-    ship = { x: W / 2, y: H - 90, r: 17, shield: false, inv: 1.5, fireT: 0, triple: 0, rapid: 0, magnet: 0 };
-    rocks = []; enemies = []; bullets = []; ebullets = []; stars = []; pups = []; parts = [];
-    boss = null; banner = null;
-    score = 0; lives = 3; chain = 0; t = 0; flash = 0; shake = 0; target = null; setPause(false);
-    level = Math.max(1, Math.min(30, +params.get('level') || 1)); levelT = 0;
-    rockT = 0; starT = 1; cometT = 5; ufoT = 12;
-    announce('Level ' + level);
-    if (level % 3 === 0) spawnBoss();
-    running = true; ui.classList.add('hidden');
-    last = performance.now(); requestAnimationFrame(loop);
-  }
-  startBtn.onclick = start;
-
-  function end() {
-    running = false;
-    if (score > best) { best = score; try { localStorage.setItem('sternenfaenger-best', best); } catch (e) {} }
-    title.textContent = 'Game Over';
-    msg.textContent = 'Du hast ' + score + ' Punkte erreicht und Level ' + level + ' geschafft.';
-    startBtn.textContent = 'Nochmal';
-    showBest(); ui.classList.remove('hidden');
-  }
-
-  function setPause(v) { paused = v; bPause.textContent = v ? '▶' : '⏸'; }
-  function togglePause() { if (running) setPause(!paused); }
-  const announce = (text) => { banner = { text, t: 2.2 }; };
-
-  // ---------- Effekte ----------
-  function boom(x, y, color, n = 14, sp = 220) {
-    for (let i = 0; i < n; i++) {
-      const a = rnd(0, TAU), s = rnd(40, sp);
-      parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: rnd(.3, .8), max: .8, c: color, r: rnd(1.5, 3.5) });
-    }
-  }
-
-  // ---------- Spawns ----------
-  function spawnRock(size, x, y, vx, vy) {
-    const r = [0, 14, 25, 40][size];
-    const pts = Array.from({ length: 10 }, () => rnd(.78, 1.05));
-    rocks.push({
-      size, r, hp: [0, 1, 2, 4][size], x: x ?? rnd(r, W - r), y: y ?? -r,
-      vx: vx ?? rnd(-50, 50), vy: vy ?? (rnd(80, 130) + level * 12) * (size === 1 ? 1.3 : 1),
-      rot: 0, vr: rnd(-2, 2), pts, flash: 0
-    });
-  }
-  function spawnStar() {
-    const r = 12;
-    stars.push({ x: rnd(r, W - r), y: -r, r, vy: 140 + level * 5, rot: 0 });
-  }
-  function spawnComet() {
-    const x = rnd(30, W - 30);
-    enemies.push({ type: 'comet', x, y: -20, r: 10, hp: 1, vx: (ship.x - x) * .25, vy: 360 + level * 10, score: 25, flash: 0 });
-  }
-  function spawnUfo() {
-    const dir = Math.random() < .5 ? 1 : -1;
-    enemies.push({ type: 'ufo', x: dir > 0 ? -30 : W + 30, y: rnd(70, Math.max(120, H * .3)), r: 20, hp: 3, vx: 110 * dir, vy: 0, fireT: 1, ph: 0, score: 100, flash: 0, base: 0 });
-    enemies[enemies.length - 1].base = enemies[enemies.length - 1].y;
-  }
-  function spawnBoss() {
-    const hp = 30 + level * 8;
-    boss = { x: W / 2, y: -80, r: 52, hp, max: hp, ph: 0, fireT: 2, rockT: 4, flash: 0 };
-    announce('⚠ BOSS ⚠');
-    snd(120, .6, 'sawtooth', .08, -50);
-  }
-  function dropPup(x, y, chance) {
-    if (Math.random() > chance) return;
-    const bag = ['S', 'T', 'R', 'M', 'B', 'S', 'T', 'R', 'M', 'H'];
-    const k = bag[Math.floor(Math.random() * bag.length)];
-    pups.push({ k, x, y, r: 13, vy: 90 });
-  }
-
-  // ---------- Schaden ----------
-  function hurt() {
-    if (ship.inv > 0) return;
-    if (ship.shield) {
-      ship.shield = false; ship.inv = .8; shake = .2;
-      boom(ship.x, ship.y, '#38bdf8', 18); snd(260, .25, 'sawtooth', .07, -150);
-      return;
-    }
-    lives--; chain = 0; ship.inv = 1.8; flash = .3; shake = .45;
-    boom(ship.x, ship.y, '#f87171', 24, 280); snd(160, .4, 'sawtooth', .09, -110);
-    if (lives <= 0) end();
-  }
-  function damageRock(r, dmg, byPlayer = true) {
-    r.hp -= dmg; r.flash = .08;
-    if (r.hp > 0) { snd(200, .05, 'square', .03); return; }
-    r.dead = true;
-    if (byPlayer) score += 10 * r.size * mult();
-    boom(r.x, r.y, '#94a3b8', 8 + r.size * 4);
-    snd(rnd(110, 160) - r.size * 10, .18, 'sawtooth', .05, -60);
-    if (r.size > 1) {
-      for (const d of [-1, 1]) spawnRock(r.size - 1, r.x + d * r.r * .4, r.y, d * rnd(60, 140), r.vy * rnd(.6, 1.1));
-    }
-    if (byPlayer) dropPup(r.x, r.y, r.size === 3 ? .22 : .06);
-  }
-  function damageEnemy(e, dmg) {
-    e.hp -= dmg; e.flash = .08;
-    if (e.hp > 0) { snd(300, .05, 'square', .03); return; }
-    e.dead = true; score += e.score * mult();
-    boom(e.x, e.y, e.type === 'ufo' ? '#a3e635' : '#fde68a', 18, 260);
-    snd(240, .25, 'sawtooth', .06, -170);
-    dropPup(e.x, e.y, e.type === 'ufo' ? .6 : .15);
-  }
-  function damageBoss(dmg) {
-    boss.hp -= dmg; boss.flash = .06;
-    if (boss.hp > 0) { snd(180, .04, 'square', .025); return; }
-    score += (400 + level * 100) * mult();
-    for (let i = 0; i < 6; i++) boom(boss.x + rnd(-40, 40), boss.y + rnd(-30, 30), i % 2 ? '#e879f9' : '#fde68a', 24, 320);
-    shake = .8; snd(90, 1, 'sawtooth', .1, -60);
-    pups.push({ k: 'H', x: boss.x - 20, y: boss.y, r: 13, vy: 90 }, { k: 'B', x: boss.x + 20, y: boss.y, r: 13, vy: 90 });
-    boss = null; ebullets = [];
-    announce('Boss besiegt!');
-  }
-  function bomb() {
-    shake = .6; flash = .25;
-    boom(ship.x, ship.y, '#fde68a', 40, 500);
-    for (const r of rocks) damageRock(r, 99);
-    for (const e of enemies) damageEnemy(e, 99);
-    if (boss) damageBoss(Math.min(boss.hp - 1, 15));
-    ebullets = [];
-    snd(70, .8, 'sawtooth', .12, -30);
-  }
-  function collect(p) {
-    snd(660, .12, 'sine', .07, 400);
-    boom(p.x, p.y, PUPS[p.k].c, 10, 140);
-    if (p.k === 'S') ship.shield = true;
-    else if (p.k === 'T') ship.triple = 12;
-    else if (p.k === 'R') ship.rapid = 12;
-    else if (p.k === 'M') ship.magnet = 12;
-    else if (p.k === 'H') lives = Math.min(5, lives + 1);
-    else if (p.k === 'B') bomb();
-  }
-
-  // ---------- Update ----------
-  function fire() {
-    const v = 720, shots = ship.triple > 0 ? [-.22, 0, .22] : [0];
-    for (const a of shots) bullets.push({ x: ship.x, y: ship.y - ship.r, vx: Math.sin(a) * v, vy: -Math.cos(a) * v });
-    snd(880, .05, 'square', .015, -300);
-  }
-  function ebullet(x, y, tx, ty, sp) {
-    const a = Math.atan2(ty - y, tx - x);
-    ebullets.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: 6 });
-  }
-  const hit = (a, b, pad = 0) => Math.hypot(a.x - b.x, a.y - b.y) < a.r + b.r + pad;
-
-  function update(dt) {
-    t += dt;
-    for (const k of ['inv', 'triple', 'rapid', 'magnet']) ship[k] = Math.max(0, ship[k] - dt);
-    flash = Math.max(0, flash - dt); shake = Math.max(0, shake - dt);
-    if (banner && (banner.t -= dt) <= 0) banner = null;
-
-    // Level
-    if (!boss) levelT += dt;
-    if (levelT >= 25) {
-      levelT = 0; level++; announce('Level ' + level); snd(440, .3, 'triangle', .07, 440);
-      if (level % 3 === 0) spawnBoss();
-    }
-
-    // Schiff bewegen
-    const sp = 460;
-    const L = keys.arrowleft || keys.a, R = keys.arrowright || keys.d, U = keys.arrowup || keys.w, D = keys.arrowdown || keys.s;
-    if (L || R || U || D) target = null;
-    if (L) ship.x -= sp * dt; if (R) ship.x += sp * dt;
-    if (U) ship.y -= sp * dt; if (D) ship.y += sp * dt;
-    if (target) {
-      ship.x += (target.x - ship.x) * Math.min(1, dt * 12);
-      ship.y += (target.y - ship.y) * Math.min(1, dt * 12);
-    }
-    ship.x = Math.max(ship.r, Math.min(W - ship.r, ship.x));
-    ship.y = Math.max(H * .35, Math.min(H - 40, ship.y));
-
-    // Feuern
-    if ((ship.fireT -= dt) <= 0) { fire(); ship.fireT = ship.rapid > 0 ? .1 : .2; }
-
-    // Spawns
-    if (!boss || level % 3 !== 0) {
-      if ((rockT -= dt) <= 0) {
-        spawnRock(Math.random() < .45 ? 3 : Math.random() < .6 ? 2 : 1);
-        rockT = Math.max(.45, 1.2 - level * .06);
+  // ---------- Rendering ----------
+  function render() {
+    if (!S) return;
+    const r = R[S.room], v = ver(S.room);
+    const dark = r.dark && !has('light');
+    const sc = $('scene');
+    sc.style.setProperty('--wall', r.wall); sc.style.setProperty('--floor', r.floor);
+    sc.classList.toggle('blackout', !!dark);
+    sc.classList.toggle('torch', !!r.dark && !dark);
+    $('rname').textContent = r.name;
+    $('dark').textContent = dark ? 'Es ist stockfinster. Du siehst nichts. Aber du kannst tasten …' : '';
+    cur = r.hot(v);
+    let html = '';
+    if (!dark) {
+      for (const d of (r.deco ? r.deco(v) : [])) {
+        if (d.t) html += `<div class="scrawl" style="left:${d.x}%;top:${d.y}%">${d.t}</div>`;
+        else html += `<div class="it" style="left:${d.x}%;top:${d.y}%;--s:${d.s};opacity:${d.o || 1};${d.r ? `rotate:${d.r}deg;` : ''}">${d.e}</div>`;
       }
-    }
-    if ((starT -= dt) <= 0) { spawnStar(); starT = rnd(1.2, 2.2); }
-    if (level >= 2 && (cometT -= dt) <= 0) { spawnComet(); cometT = Math.max(1.5, 5 - level * .3); }
-    if (level >= 3 && !boss && (ufoT -= dt) <= 0) { spawnUfo(); ufoT = Math.max(5, 12 - level * .6); }
-
-    // Kugeln
-    for (const b of bullets) { b.x += b.vx * dt; b.y += b.vy * dt; if (b.y < -20 || b.x < -20 || b.x > W + 20) b.dead = true; }
-    for (const b of ebullets) {
-      b.x += b.vx * dt; b.y += b.vy * dt;
-      if (b.y > H + 20 || b.y < -20 || b.x < -20 || b.x > W + 20) b.dead = true;
-      else if (hit(b, ship, -4)) { b.dead = true; hurt(); }
-    }
-
-    // Asteroiden
-    for (const r of rocks) {
-      r.y += r.vy * dt; r.x += r.vx * dt; r.rot += r.vr * dt; r.flash = Math.max(0, r.flash - dt);
-      if (r.x < r.r) { r.x = r.r; r.vx = Math.abs(r.vx); } else if (r.x > W - r.r) { r.x = W - r.r; r.vx = -Math.abs(r.vx); }
-      if (r.y > H + r.r) { r.dead = true; continue; }
-      for (const b of bullets) if (!b.dead && !r.dead && hit(r, { x: b.x, y: b.y, r: 3 })) { b.dead = true; damageRock(r, 1); }
-      if (!r.dead && hit(r, ship, -6)) { damageRock(r, 99, false); hurt(); }
-    }
-
-    // Gegner
-    for (const e of enemies) {
-      e.flash = Math.max(0, e.flash - dt);
-      e.x += e.vx * dt; e.y += e.vy * dt;
-      if (e.type === 'ufo') {
-        e.ph += dt * 3; e.y = e.base + Math.sin(e.ph) * 30;
-        if ((e.fireT -= dt) <= 0) { ebullet(e.x, e.y, ship.x, ship.y, 220 + level * 6); e.fireT = rnd(1.4, 2.2); snd(500, .1, 'triangle', .03, -250); }
-        if (e.x < -60 || e.x > W + 60) e.dead = true;
-      } else if (e.y > H + 30) e.dead = true;
-      for (const b of bullets) if (!b.dead && !e.dead && hit(e, { x: b.x, y: b.y, r: 3 })) { b.dead = true; damageEnemy(e, 1); }
-      if (!e.dead && hit(e, ship, -4)) { damageEnemy(e, 99); hurt(); }
-    }
-
-    // Boss
-    if (boss) {
-      boss.flash = Math.max(0, boss.flash - dt);
-      if (boss.y < 135) boss.y += 70 * dt;
-      else {
-        boss.ph += dt * (.8 + level * .03);
-        boss.x = W / 2 + Math.sin(boss.ph) * (W / 2 - boss.r - 20);
-        if ((boss.fireT -= dt) <= 0) {
-          for (const o of [-60, 0, 60]) ebullet(boss.x, boss.y + 30, ship.x + o, ship.y, 230 + level * 8);
-          boss.fireT = Math.max(.9, 1.7 - level * .04); snd(150, .15, 'sawtooth', .04, -60);
-        }
-        if ((boss.rockT -= dt) <= 0) { spawnRock(2, boss.x, boss.y + 40, rnd(-80, 80), 150); boss.rockT = 4; }
-      }
-      for (const b of bullets) if (boss && !b.dead && hit(boss, { x: b.x, y: b.y, r: 3 })) { b.dead = true; damageBoss(1); }
-      if (boss && hit(boss, ship, -10)) hurt();
-    }
-
-    // Sterne & Power-ups
-    for (const s of stars) {
-      s.rot += dt * 2;
-      if (ship.magnet > 0) {
-        const dx = ship.x - s.x, dy = ship.y - s.y, d = Math.hypot(dx, dy);
-        if (d < 260 && d > 1) { s.x += dx / d * 420 * dt; s.y += dy / d * 420 * dt; }
-      }
-      s.y += s.vy * dt;
-      if (hit(s, ship, 4)) {
-        s.dead = true; chain++; score += 10 * mult();
-        snd(700 + Math.min(chain, 20) * 40, .1, 'sine', .06, 300);
-        boom(s.x, s.y, '#facc15', 6, 120);
-      } else if (s.y > H + 20) s.dead = true;
-    }
-    for (const p of pups) {
-      p.y += p.vy * dt;
-      if (hit(p, ship, 4)) { p.dead = true; collect(p); } else if (p.y > H + 20) p.dead = true;
-    }
-
-    for (const p of parts) { p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= .98; p.vy *= .98; p.life -= dt; }
-
-    const alive = a => !a.dead;
-    rocks = rocks.filter(alive); enemies = enemies.filter(alive); bullets = bullets.filter(alive);
-    ebullets = ebullets.filter(alive); stars = stars.filter(alive); pups = pups.filter(alive);
-    parts = parts.filter(p => p.life > 0);
-  }
-
-  // ---------- Zeichnen ----------
-  function starPath(x, y, r, rot) {
-    ctx.beginPath();
-    for (let i = 0; i < 10; i++) {
-      const a = rot + i * Math.PI / 5 - Math.PI / 2, rr = i % 2 ? r * .45 : r;
-      ctx[i ? 'lineTo' : 'moveTo'](x + Math.cos(a) * rr, y + Math.sin(a) * rr);
-    }
-    ctx.closePath();
-  }
-  function drawShip() {
-    if (ship.inv > 0 && Math.floor(ship.inv * 12) % 2) return;
-    const { x, y, r } = ship;
-    ctx.fillStyle = '#fb923c';
-    ctx.beginPath(); ctx.moveTo(x - 6, y + r * .6); ctx.lineTo(x, y + r + 6 + Math.random() * 10); ctx.lineTo(x + 6, y + r * .6); ctx.fill();
-    ctx.fillStyle = ship.rapid > 0 ? '#fdba74' : '#38bdf8';
-    ctx.beginPath();
-    ctx.moveTo(x, y - r); ctx.lineTo(x + r, y + r); ctx.lineTo(x, y + r * .5); ctx.lineTo(x - r, y + r);
-    ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#e0f2fe'; ctx.beginPath(); ctx.arc(x, y, 4, 0, TAU); ctx.fill();
-    if (ship.shield) {
-      ctx.strokeStyle = 'rgba(56,189,248,.8)'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.arc(x, y, r + 12 + Math.sin(t * 8) * 2, 0, TAU); ctx.stroke();
-    }
-    if (ship.magnet > 0) {
-      ctx.strokeStyle = 'rgba(167,139,250,.25)'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(x, y, 260, 0, TAU); ctx.stroke();
-    }
-  }
-  function drawBoss() {
-    const { x, y, r } = boss;
-    ctx.fillStyle = boss.flash > 0 ? '#fff' : '#a21caf';
-    ctx.strokeStyle = '#e879f9'; ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(x - r, y - 10); ctx.lineTo(x - r * .5, y - r * .7); ctx.lineTo(x + r * .5, y - r * .7);
-    ctx.lineTo(x + r, y - 10); ctx.lineTo(x + r * .6, y + r * .6); ctx.lineTo(x, y + r * .9); ctx.lineTo(x - r * .6, y + r * .6);
-    ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#fde047';
-    for (const d of [-1, 1]) { ctx.beginPath(); ctx.arc(x + d * 18, y - 6, 8, 0, TAU); ctx.fill(); }
-    ctx.fillStyle = '#0f172a';
-    for (const d of [-1, 1]) { ctx.beginPath(); ctx.arc(x + d * 18 + (ship.x - x) * .02, y - 6, 3.5, 0, TAU); ctx.fill(); }
-    // Lebensbalken
-    const bw = Math.min(360, W - 40), bx = (W - bw) / 2;
-    ctx.fillStyle = 'rgba(255,255,255,.15)'; ctx.fillRect(bx, 54, bw, 8);
-    ctx.fillStyle = '#e879f9'; ctx.fillRect(bx, 54, bw * boss.hp / boss.max, 8);
-  }
-  function draw() {
-    ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = '#e2e8f0';
-    for (const s of bgStars) {
-      const y = (s.y * H + (running && !paused ? t : 0) * 30 * s.s) % H;
-      ctx.globalAlpha = .3 + s.s / 3; ctx.fillRect(s.x * W, y, s.s, s.s);
-    }
-    ctx.globalAlpha = 1;
-    if (!ship) return;
-
-    ctx.save();
-    if (shake > 0) ctx.translate(rnd(-1, 1) * shake * 16, rnd(-1, 1) * shake * 16);
-
-    for (const s of stars) { ctx.fillStyle = '#facc15'; starPath(s.x, s.y, s.r, s.rot); ctx.fill(); }
-    for (const p of pups) {
-      const d = PUPS[p.k];
-      ctx.fillStyle = d.c; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill();
-      ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.globalAlpha = .5 + Math.sin(t * 8) * .3; ctx.stroke(); ctx.globalAlpha = 1;
-      ctx.fillStyle = '#0f172a'; ctx.font = '700 14px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(d.label, p.x, p.y + 1);
-    }
-    for (const r of rocks) {
-      ctx.fillStyle = r.flash > 0 ? '#e2e8f0' : '#64748b'; ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2;
-      ctx.beginPath();
-      r.pts.forEach((m, i) => {
-        const a = r.rot + i * TAU / r.pts.length;
-        ctx[i ? 'lineTo' : 'moveTo'](r.x + Math.cos(a) * r.r * m, r.y + Math.sin(a) * r.r * m);
+      cur.forEach((h, i) => {
+        html += `<button class="it ${h.k === 'go' ? 'go' : ''} ${h.cls || ''}" data-i="${i}" style="left:${h.x}%;top:${h.y}%;--s:${h.s};${h.f ? `filter:${h.f};` : ''}" title="${h.l}">${h.e}<small>${h.l}</small></button>`;
       });
-      ctx.closePath(); ctx.fill(); ctx.stroke();
     }
-    for (const e of enemies) {
-      if (e.type === 'comet') {
-        const g = ctx.createLinearGradient(e.x, e.y, e.x - e.vx * .12, e.y - e.vy * .12);
-        g.addColorStop(0, '#fde68a'); g.addColorStop(1, 'rgba(253,230,138,0)');
-        ctx.strokeStyle = g; ctx.lineWidth = 10; ctx.lineCap = 'round';
-        ctx.beginPath(); ctx.moveTo(e.x, e.y); ctx.lineTo(e.x - e.vx * .12, e.y - e.vy * .12); ctx.stroke();
-        ctx.fillStyle = e.flash > 0 ? '#fff' : '#fbbf24'; ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, TAU); ctx.fill();
-      } else {
-        ctx.fillStyle = e.flash > 0 ? '#fff' : '#84cc16';
-        ctx.beginPath(); ctx.ellipse(e.x, e.y, e.r * 1.3, e.r * .5, 0, 0, TAU); ctx.fill();
-        ctx.fillStyle = '#bef264'; ctx.beginPath(); ctx.arc(e.x, e.y - 5, e.r * .6, Math.PI, 0); ctx.fill();
-      }
-    }
-    if (boss) drawBoss();
-    ctx.fillStyle = '#7dd3fc';
-    for (const b of bullets) ctx.fillRect(b.x - 2, b.y - 8, 4, 14);
-    ctx.fillStyle = '#f87171';
-    for (const b of ebullets) { ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, TAU); ctx.fill(); }
-    for (const p of parts) {
-      ctx.globalAlpha = Math.max(0, p.life / p.max); ctx.fillStyle = p.c;
-      ctx.fillRect(p.x, p.y, p.r, p.r);
-    }
-    ctx.globalAlpha = 1;
-    drawShip();
-    ctx.restore();
+    $('stage').innerHTML = html;
+    let a = '';
+    const looks = cur.map((h, i) => [h, i]).filter(([h]) => h.k === 'look');
+    const gos = cur.map((h, i) => [h, i]).filter(([h]) => h.k === 'go');
+    if (looks.length) a += `<div class="grp"><span>Untersuchen</span>${looks.map(([h, i]) => `<button data-i="${i}">${h.l}</button>`).join('')}</div>`;
+    a += `<div class="grp"><span>Gehen</span>${gos.map(([h, i]) => `<button class="go" data-i="${i}">→ ${h.l}</button>`).join('')}<button data-think="1">💭 Nachdenken</button></div>`;
+    $('acts').innerHTML = a;
+    updateHUD();
+  }
+  function press(i) { if (S.over || !$('modal').classList.contains('hidden')) return; sfx.click(); cur[i].run(); }
+  $('scene').addEventListener('click', e => { const b = e.target.closest('button.it'); if (b) press(+b.dataset.i); });
+  $('acts').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.think) think(); else press(+b.dataset.i);
+  });
+  $('inv').addEventListener('click', e => {
+    const b = e.target.closest('.slot'); if (!b || !S) return;
+    const k = b.dataset.k;
+    if (!has(k)) return;
+    if (HINTS.includes(k)) reader(k); else say(`<b>${ITEMS[k].e} ${ITEMS[k].n}:</b> ${ITEMS[k].d}`);
+  });
+  function trackLight(e) {
+    const r = $('scene').getBoundingClientRect(), t = e.touches ? e.touches[0] : e;
+    $('scene').style.setProperty('--mx', (t.clientX - r.left) + 'px'); $('scene').style.setProperty('--my', (t.clientY - r.top) + 'px');
+  }
+  $('scene').addEventListener('mousemove', trackLight);
+  $('scene').addEventListener('touchmove', trackLight, { passive: true });
+  function sizeUnit() { const s = $('scene'); s.style.setProperty('--u', Math.min(s.clientHeight, s.clientWidth / 1.7) / 100 + 'px'); }
+  addEventListener('resize', sizeUnit);
 
-    if (flash > 0) { ctx.fillStyle = 'rgba(248,113,113,' + flash * .5 + ')'; ctx.fillRect(0, 0, W, H); }
-
-    // HUD
-    ctx.fillStyle = '#f8fafc'; ctx.font = '700 22px system-ui,sans-serif'; ctx.textBaseline = 'top';
-    ctx.textAlign = 'left'; ctx.fillText('Punkte: ' + score, 16, 14);
-    ctx.font = '600 14px system-ui,sans-serif'; ctx.fillStyle = '#94a3b8'; ctx.fillText('Level ' + level + (boss ? ' · BOSS' : ''), 16, 42);
-    ctx.textAlign = 'right'; ctx.font = '700 22px system-ui,sans-serif'; ctx.fillStyle = '#f87171';
-    ctx.fillText('♥'.repeat(Math.max(0, lives)), W - 16, 14);
-    if (mult() > 1) {
-      ctx.fillStyle = '#facc15'; ctx.font = '700 18px system-ui,sans-serif'; ctx.fillText('x' + mult() + ' Combo', W - 16, 44);
-    }
-    // aktive Power-ups
-    let py = 70;
-    for (const [k, c, label] of [['triple', '#f472b6', 'T'], ['rapid', '#fb923c', 'R'], ['magnet', '#a78bfa', 'M']]) {
-      if (ship[k] > 0) {
-        ctx.fillStyle = c; ctx.fillRect(W - 16 - 70 * ship[k] / 12, py, 70 * ship[k] / 12, 6);
-        ctx.font = '700 12px system-ui'; ctx.fillText(label, W - 16 - 78, py - 3); py += 14;
-      }
-    }
-
-    if (banner) {
-      ctx.globalAlpha = Math.min(1, banner.t); ctx.fillStyle = '#f8fafc'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.font = '800 ' + Math.min(64, W / 8) + 'px system-ui,sans-serif'; ctx.fillText(banner.text, W / 2, H * .3);
-      ctx.globalAlpha = 1;
-    }
-    if (paused) {
-      ctx.fillStyle = 'rgba(15,23,42,.6)'; ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = '#f8fafc'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.font = '800 48px system-ui,sans-serif'; ctx.fillText('Pause', W / 2, H / 2);
-      ctx.font = '16px system-ui,sans-serif'; ctx.fillText('P drücken oder ▶ antippen', W / 2, H / 2 + 44);
-    }
+  // ---------- Aktionen ----------
+  function go(to) {
+    S.room = to; S.steps++; sfx.step();
+    say(`<b>${R[to].name}.</b> ${R[to].desc(ver(to))}`);
+    tick(); render();
+  }
+  function think() {
+    if (S.over) return;
+    let t;
+    if (!has('key')) t = 'Du brauchst einen Schlüssel – aber wo? Der Zettel sagte: dort, wo es einmal warm war. Vielleicht ein Raum mit einem Kamin …';
+    else if (!has('light')) t = 'Der Schlüssel passt sicher zu der schweren Tür im Flur: dem Keller. Dort unten wird es dunkel sein – du musst tasten.';
+    else if (hints() < 3) {
+      const o = [];
+      if (!has('diary')) o.push('Der Keller verbirgt mehr, als nur Dunkelheit.');
+      if (!has('photo')) o.push('Im Kinderzimmer oben liegt noch etwas aus der Vergangenheit.');
+      if (!has('letter')) o.push(S.flags.phone ? 'Die Stimme sagte: „unterm Dach“.' : 'Es gibt noch einen Ort, der höher liegt als das Kinderzimmer.');
+      t = o.join(' ') + ' Du hast ' + hints() + ' von 3 Hinweisen.';
+    } else t = 'Drei Ziffern: 3 – 0 – 7. Die Haustür wartet. Und da ist ein Name, den du rufen willst …';
+    say('💭 <i>' + t + '</i>'); cost(); render();
+  }
+  function reader(k) {
+    S.flags['read_' + k] = 1;
+    modal(`<h2>${ITEMS[k].e} ${ITEMS[k].n}</h2>${READ[k]}<button class="btn" data-a="close">Weiter</button>`);
   }
 
-  function loop(now) {
-    const dt = Math.min(.05, (now - last) / 1000); last = now;
-    if (!paused) update(dt);
-    draw();
-    if (running) requestAnimationFrame(loop);
+  // ---------- Modal ----------
+  const modalEl = $('modal');
+  function modal(html) { $('mbox').innerHTML = html; modalEl.classList.remove('hidden'); }
+  function closeModal() { modalEl.classList.add('hidden'); }
+  modalEl.addEventListener('click', e => {
+    const b = e.target.closest('[data-a]');
+    if (!b) { if (e.target === modalEl) closeModal(); return; }
+    const a = b.dataset.a;
+    if (a === 'close') closeModal();
+    else if (a[0] === 'u' || a[0] === 'd') {
+      const i = +a[1]; S.code[i] = (S.code[i] + (a[0] === 'u' ? 1 : 9)) % 10; sfx.click(); lockUI();
+    } else if (a === 'try') tryCode();
+    else if (a === 'flee') { closeModal(); fleeBack(); }
+    else if (a.startsWith('end:')) { closeModal(); ending(a.slice(4)); }
+  });
+  addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  function openLock() {
+    if (!S.code) S.code = [0, 0, 0];
+    S.lockMsg = 'Die Haustür ist mit einem schweren Zahlenschloss gesichert. Drei Ziffern.';
+    lockUI();
   }
-  draw();
+  function lockUI() {
+    const note = [S.inv.diary ? CODE[0] : '?', S.inv.photo ? CODE[1] : '?', S.inv.letter ? CODE[2] : '?'].join(' · ');
+    modal(`<h2>🔢 Zahlenschloss</h2><p class="dim">${S.lockMsg}</p>
+      <div class="digits">${S.code.map((d, i) => `<div class="dg"><button data-a="u${i}">▲</button><div>${d}</div><button data-a="d${i}">▼</button></div>`).join('')}</div>
+      <p class="err" id="err"></p><p class="dim" style="text-align:center">Notizen: ${note}</p>
+      <div style="text-align:center"><button class="btn" data-a="try">Öffnen</button><button class="btn alt" data-a="close">Zurück</button></div>`);
+  }
+  function tryCode() {
+    if (S.code.join('') === CODE.join('')) {
+      sfx.got();
+      if (hints() === 3) {
+        modal(`<h2>🚪 Die Haustür ist offen</h2>
+          <p>Das Schloss springt auf. Kalte Morgenluft strömt herein – und hinter dir, im Haus, wird es ganz still. Als würde alles den Atem anhalten.</p>
+          <p>Du hast alle Hinweise gelesen. Was tust du?</p>
+          <button class="btn" data-a="end:freiheit">Hinausgehen</button><br>
+          <button class="btn" data-a="end:frieden">Lenas Namen rufen</button><br>
+          <button class="btn alt" data-a="end:bleiben">Im Haus bleiben</button><br>
+          <button class="btn alt" data-a="close">Noch nicht</button>`);
+      } else { closeModal(); ending('halb', 'guess'); }
+    } else {
+      sfx.click(); S.steps++; tick();
+      if (S.over) return;
+      $('err').textContent = 'Klack. Das Schloss bleibt zu.';
+    }
+  }
+  function backDoor() {
+    if (!has('key')) { say('Die Hintertür ist abgeschlossen. Das Schloss ist alt – es braucht einen Schlüssel.'); return; }
+    if (!has('light')) { say('Du schließt auf und spähst hinaus: Nebel, pechschwarz. Ohne Licht würdest du dich im Garten verirren. Du schließt wieder zu.'); cost(); render(); return; }
+    modal(`<h2>🚪 Die Hintertür</h2><p>Der Schlüssel dreht sich. Draußen: Nebel, ein Gartentor in der Ferne, dein Lichtkegel zeigt den Weg. Du könntest einfach laufen.</p>
+      <p class="dim">Du hast ${Object.keys(S.inv).length} von 5 Gegenständen, davon ${hints()} von 3 Hinweisen.</p>
+      <button class="btn" data-a="flee">Fliehen</button><button class="btn alt" data-a="close">Noch nicht</button>`);
+  }
+  function fleeBack() { hints() === 0 ? ending('ahnungslos') : ending('halb', hints() === 3 ? 'back3' : 'back'); }
+
+  // ---------- Enden ----------
+  const ENDS = {
+    ahnungslos: { n: 1, t: 'Ahnungslos', x: () => `<p>Das Schloss springt auf. Du stolperst in den Garten, und der Nebel schluckt das Haus hinter dir. Du rennst durch das verrostete Tor, die Straße hinab, bis die Lichter einer Tankstelle auftauchen.</p><p>Du weißt nicht, wo du warst. Du weißt nicht, warum. Nur manchmal, nachts, wenn es um 3:07 Uhr plötzlich ganz still wird, hörst du ein Kinderlachen, weit weg.</p><p><i>Du bist entkommen – aber du hast nichts verstanden.</i></p>` },
+    halb: { n: 2, t: 'Halbe Wahrheit', x: v => (v === 'guess'
+        ? `<p>Du drehst die Ziffern: 3 – 0 – 7. Es klickt. Die Zeit, in der die Standuhr stehen blieb, war der Schlüssel. Du öffnest die Tür und gehst hinaus ins Morgengrau.</p>`
+        : v === 'back3'
+          ? `<p>Du kennst jetzt die ganze Geschichte – und läufst trotzdem. Durch die Hintertür, in den Nebel, ohne dich umzudrehen.</p>`
+          : `<p>Du schließt die Hintertür auf und läufst in den Nebel, die Taschenlampe zitternd in der Hand.</p>`)
+        + `<p>Du kennst einen Namen: <b>Lena</b>. Du hast Bruchstücke gelesen, ein Foto, eine Seite, die dich nicht loslässt. Aber das Ganze fehlt. Du fährst weg – und das Gefühl, etwas zurückgelassen zu haben, fährt mit.</p><p><i>Du hast einen Teil der Wahrheit. Der Rest bleibt im Haus.</i></p>` },
+    freiheit: { n: 3, t: 'Freiheit', x: () => `<p>Du trittst hinaus. Das Morgenlicht ist blendend, Vögel singen, als hätte es das alles nie gegeben. Hinter dir fällt die Tür leise ins Schloss.</p><p>Du hast alles gelesen, alles verstanden – und gehst trotzdem, ohne ein Wort. Im Haus, oben im Kinderzimmer, brennt ein winziges Licht.</p><p><i>Du bist frei. Aber Lena wartet noch immer.</i></p>` },
+    frieden: { n: 4, t: 'Lenas Frieden', x: () => `<p>„<b>Lena</b>.“</p><p>Dein Flüstern hallt durch das ganze Haus. Es holt tief Luft. Zwischen den Dielen, in den Wänden, im Dach – ein Seufzen wie von jemandem, der lange gewartet hat.</p><p>Eine kleine, warme Hand schiebt sich in deine. Du siehst sie nicht, aber du spürst ihr Lachen. Und jetzt erinnerst du dich: Ihr habt Verstecken gespielt. Du hast gezählt, bist müde geworden und hast aufgehört zu suchen. Es war nie deine Schuld – nur ein Kind, das eingeschlafen ist.</p><p>Die Haustür schwingt auf. Sonnenlicht. Die Hand lässt los, und für einen Augenblick tanzen zwei Schatten über die Schwelle – dann ist da nur noch Licht. Das Haus knackt ein letztes Mal und schläft ein.</p><p><i>Du hast sie endlich gefunden. Und sie dich.</i></p>` },
+    bleiben: { n: 5, t: 'Für immer zu Hause', x: () => `<p>Du lässt die Klinke los und setzt dich auf die unterste Treppenstufe. Das Haus fühlt sich plötzlich warm an. Oben gehen Schritte, ein Lachen, eine Spieluhr.</p><p>Die Türen stehen offen, aber niemand geht hinaus. Draußen vergehen Jahre. Im Wohnzimmer hängt ein neues Gemälde: ein Mann, eine Frau, ein kleines Mädchen mit Zöpfen – und du, mit ernstem Blick.</p><p><i>Du bist wieder zu Hause. Für immer.</i></p>` },
+    behaelt: { n: 6, t: 'Das Haus behält dich', x: () => `<p>Es ist <b>3:07 Uhr</b>. Im Wohnzimmer schlägt die Standuhr – obwohl sie stillstand. Alle Türen fallen gleichzeitig zu. ${S && has('light') ? 'Die Taschenlampe flackert und erlischt.' : 'Die Dunkelheit wird dichter.'}</p><p>Hinter dir atmet etwas. Du drehst dich nicht um. Du kennst das Haus jetzt gut genug, um zu wissen, dass es nicht mehr wartet.</p><p><i>Um 3:07 Uhr hört das Haus auf zu warten. Und beginnt, dich zu behalten.</i></p>` }
+  };
+  const loadEnds = () => { try { return JSON.parse(localStorage.getItem('haus-enden') || '[]'); } catch (e) { return []; } };
+  function ending(id, variant) {
+    if (S.over) return;
+    S.over = true; closeModal();
+    const e = ENDS[id], found = loadEnds();
+    if (!found.includes(id)) { found.push(id); try { localStorage.setItem('haus-enden', JSON.stringify(found)); } catch (x) {} }
+    sfx[id === 'behaelt' || id === 'bleiben' ? 'scare' : 'got']();
+    $('ebox').innerHTML = `<div class="no">Ende ${e.n} von 6</div><h1>${e.t}</h1>${e.x(variant)}
+      <p class="dim" style="text-align:center">Gegenstände: ${Object.keys(S.inv).length} von 5 · Enden entdeckt: ${found.length} von 6</p>
+      <div style="text-align:center"><button class="btn" id="again">Noch einmal</button></div>`;
+    $('end').classList.remove('hidden');
+    $('again').onclick = () => { $('end').classList.add('hidden'); newGame(); };
+  }
+
+  // ---------- Start ----------
+  function newGame() {
+    S = { room: 'schlaf', steps: 0, inv: {}, flags: {}, seen: {}, fired: {}, log: [], over: false, code: [0, 0, 0] };
+    say('Du wachst auf. Staub in der Nase, Kälte in den Knochen. Das Letzte, woran du dich erinnerst, ist ein Regenabend, eine Landstraße und ein Haus, in dem noch Licht brannte. Jetzt ist es dunkel – und still. Nirgends tickt eine Uhr.');
+    say(`<b>${R.schlaf.name}.</b> ${R.schlaf.desc(0)}`);
+    sizeUnit(); render();
+  }
+  function showTitle() {
+    const n = loadEnds().length;
+    $('found').textContent = n ? `Enden entdeckt: ${n} von 6` : '';
+  }
+  $('startBtn').onclick = () => { $('title').classList.add('hidden'); newGame(); sfx.creak(); };
+  showTitle();
 })();
 </script>
 </body>
