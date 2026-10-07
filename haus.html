@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Das verlassene Haus</title>
+<style>
+  :root{--bg:#0b0a10;--panel:#14121c;--line:#2a2638;--txt:#e7e3ef;--dim:#8d87a0;--gold:#facc15;--red:#f87171}
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:var(--bg);color:var(--txt);font-family:Georgia,'Times New Roman',serif}
+  button{font-family:inherit;cursor:pointer;color:inherit}
+  #app{max-width:860px;margin:0 auto;padding:10px;display:flex;flex-direction:column;gap:10px;min-height:100vh}
+  #hud{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;justify-content:space-between;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+  .ttl{font-weight:700;letter-spacing:.5px}
+  #inv{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .slot{width:38px;height:38px;border-radius:8px;border:1px solid var(--line);background:#0e0c14;font-size:20px;display:grid;place-items:center;padding:0}
+  .slot.empty{opacity:.35;filter:grayscale(1)}
+  .slot.hint{border-color:#6d5bd0}
+  #code{font:600 13px ui-monospace,monospace;color:var(--dim);margin-left:6px}
+  .right{display:flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums}
+  #clock{font-weight:700}
+  #clock.late{color:var(--red)}
+  #mute{background:none;border:1px solid var(--line);border-radius:50%;width:32px;height:32px}
+  #scene{position:relative;height:clamp(240px,46vh,420px);border-radius:12px;overflow:hidden;border:1px solid var(--line);
+    background:linear-gradient(to bottom,rgba(0,0,0,.45),rgba(0,0,0,0) 35%),linear-gradient(to bottom,var(--wall) 0 68%,var(--floor) 68% 100%);--mx:50%;--my:50%;--u:3px}
+  #scene::before{content:'';position:absolute;left:0;right:0;top:68%;height:3px;background:rgba(0,0,0,.45)}
+  #stage{position:absolute;inset:0;animation:flick 5s infinite}
+  @keyframes flick{0%,100%{opacity:1}47%{opacity:1}48%{opacity:.88}50%{opacity:1}83%{opacity:.94}}
+  .it{position:absolute;transform:translate(-50%,-50%);font-size:calc(var(--s)*var(--u));line-height:1;text-align:center;user-select:none;background:none;border:0;padding:0;text-shadow:0 4px 10px rgba(0,0,0,.6)}
+  .it small{display:block;font:11px/1.1 system-ui,sans-serif;color:#d8d2e8;text-shadow:0 1px 3px #000;margin-top:3px;white-space:nowrap}
+  button.it:hover{filter:drop-shadow(0 0 10px #facc15) brightness(1.2);transform:translate(-50%,-50%) scale(1.08)}
+  .it.go small{color:#a5b4fc}
+  .it.shake{animation:shake .5s infinite}
+  @keyframes shake{0%,100%{rotate:0deg}25%{rotate:-10deg}75%{rotate:10deg}}
+  .scrawl{position:absolute;transform:translate(-50%,-50%) rotate(-4deg);font:700 calc(var(--u)*5) 'Segoe Script','Comic Sans MS',cursive;color:#fca5a5;opacity:.85;text-shadow:0 0 6px #7f1d1d;white-space:nowrap;pointer-events:none}
+  #tint{position:absolute;inset:0;background:#7f1d1d;opacity:var(--ta,0);pointer-events:none;mix-blend-mode:multiply}
+  #dark{position:absolute;inset:0;pointer-events:none;display:grid;place-items:center;text-align:center;color:#6b6580;font-style:italic;padding:20px;
+    background:radial-gradient(ellipse at center,rgba(0,0,0,0) 45%,rgba(0,0,0,.6))}
+  #scene.torch #dark{background:radial-gradient(circle 150px at var(--mx) var(--my),rgba(0,0,0,0) 0,rgba(0,0,0,.25) 60%,rgba(0,0,0,.97) 100%)}
+  #scene.blackout #dark{background:#000}
+  #scene.glitch{animation:glitch .7s}
+  @keyframes glitch{0%{filter:none}15%{filter:hue-rotate(90deg) saturate(2);transform:translateX(-4px)}30%{filter:invert(.15);transform:translateX(5px)}60%{filter:brightness(.4)}100%{filter:none;transform:none}}
+  #rname{position:absolute;left:12px;top:8px;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#cfc8e0;text-shadow:0 1px 4px #000;pointer-events:none;z-index:2}
+  #log{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;height:clamp(130px,22vh,200px);overflow-y:auto;line-height:1.5;font-size:16px}
+  #log p{margin:0 0 8px}
+  #log p:last-child{animation:fade .6s}
+  #log p.old{opacity:.55}
+  #log p.chg{color:#c4b5fd;font-style:italic}
+  #log p.ev{color:var(--dim);font-style:italic}
+  #log p.got{color:var(--gold)}
+  #log b{color:#fff}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}}
+  #acts{display:flex;flex-direction:column;gap:8px}
+  .grp{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .grp>span{font:12px system-ui,sans-serif;color:var(--dim);text-transform:uppercase;letter-spacing:1px;min-width:92px}
+  #acts button{background:#1b1827;border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:14px}
+  #acts button:hover{border-color:#6d5bd0;background:#242035}
+  #acts button.go{border-color:#334;background:#171a2b}
+  #modal,#end,#title{position:fixed;inset:0;background:rgba(5,4,9,.88);display:grid;place-items:center;padding:18px;z-index:10;overflow:auto}
+  .hidden{display:none!important}
+  .box{max-width:520px;width:100%;background:#17141f;border:1px solid #3a3450;border-radius:14px;padding:22px;line-height:1.55}
+  .box h2{margin:0 0 10px}
+  .box p{margin:8px 0}
+  .paper{background:#e8dcc0;color:#3b2f20;padding:16px 18px;border-radius:4px;font-style:italic;box-shadow:0 6px 18px rgba(0,0,0,.5)}
+  mark{background:#facc15;color:#000;padding:0 4px;border-radius:3px;font-style:normal;font-weight:700}
+  .btn{display:inline-block;margin:8px 8px 0 0;padding:10px 20px;border-radius:999px;border:0;background:var(--gold);color:#111;font-weight:700;font-size:15px}
+  .btn.alt{background:#2a2638;color:var(--txt);border:1px solid #433c5c}
+  .digits{display:flex;gap:14px;justify-content:center;margin:14px 0}
+  .dg{display:flex;flex-direction:column;align-items:center;gap:4px}
+  .dg button{width:52px;height:32px;border-radius:8px;border:1px solid #433c5c;background:#2a2638}
+  .dg div{width:52px;height:60px;display:grid;place-items:center;font:700 34px ui-monospace,monospace;background:#000;border-radius:8px;border:1px solid #433c5c;color:var(--gold)}
+  .err{color:var(--red);min-height:1.4em;text-align:center}
+  #title .box,#end .box{max-width:600px;text-align:center}
+  #title h1{font-size:clamp(30px,7vw,52px);margin:4px 0 10px}
+  #end .box{text-align:left}
+  #end h1{margin:4px 0;text-align:center;font-size:clamp(26px,6vw,42px)}
+  #end .no{text-align:center;color:var(--dim);font:13px system-ui,sans-serif;letter-spacing:2px;text-transform:uppercase}
+  .dim{color:var(--dim);font-size:14px}
+  a{color:#94a3b8;font:14px system-ui,sans-serif}
+  @media(max-width:560px){.grp>span{min-width:100%}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="hud">
+    <div class="ttl">🏚️ Das verlassene Haus</div>
+    <div id="inv"></div>
+    <div class="right"><span id="clock">🕰 23:00</span><button id="mute" title="Sound">🔊</button></div>
+  </header>
+  <div id="scene"><div id="rname"></div><div id="stage"></div><div id="tint"></div><div id="dark"></div></div>
+  <div id="log"></div>
+  <div id="acts"></div>
+</div>
+
+<div id="modal" class="hidden"><div class="box" id="mbox"></div></div>
+
+<div id="end" class="hidden"><div class="box" id="ebox"></div></div>
+
+<div id="title">
+  <div class="box">
+    <h1>Das verlassene Haus</h1>
+    <p>Du wachst auf – allein, in einem Haus, das seit Jahren leer steht. Die Türen sind verschlossen, die Uhr ist stehen geblieben.</p>
+    <p>Finde <b>5 Gegenstände</b>, um wieder hinauszukommen. Aber sei vorsichtig: Das Haus verändert sich, wenn du nicht hinsiehst … und die Zeit läuft.</p>
+    <p class="dim">Klicke auf Dinge im Raum oder nutze die Knöpfe darunter. Es gibt <b>6 verschiedene Enden</b>.</p>
+    <p class="dim" id="found"></p>
+    <button class="btn" id="startBtn">Betreten</button><br>
+    <a href="index.html">← Startseite</a>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const MAX = 140;               // Schritte bis 3:07 Uhr
+  const CODE = [3, 0, 7];
+  const ITEMS = {
+    key:    { e: '🗝️', n: 'Rostiger Schlüssel', d: 'Ein alter Schlüssel an einem verblichenen blauen Band. Er passt in Schlösser, die lange niemand geöffnet hat.' },
+    light:  { e: '🔦', n: 'Taschenlampe', d: 'Schwer, aus Metall. Der Lichtkegel ist gelb, aber er hält.' },
+    diary:  { e: '📖', n: 'Tagebuchseite' },
+    photo:  { e: '🖼️', n: 'Zerrissenes Foto' },
+    letter: { e: '✉️', n: 'Brief' }
+  };
+  const HINTS = ['diary', 'photo', 'letter'];
+  const READ = {
+    diary: `<p class="paper">3. Oktober.<br><br>Ich habe das Haus abgeschlossen und werde es nie wieder betreten. Seit jener Nacht um 3:07 Uhr, als Lena verschwand, ist hier nichts mehr, wie es war. Das Kind fragt nicht mehr nach ihr. Vielleicht ist das besser.<br><br>Ich sichere die Haustür mit einem Zahlenschloss und verteile den Code auf drei Orte, damit ihn niemand allein findet. Der erste Teil, hier: die <mark>DREI</mark>.<br><br>– M.</p>`,
+    photo: `<p>Zwei Kinder auf einer Schaukel im Garten, mitten im Lachen. Das Foto ist in der Mitte zerrissen – neben dem lachenden Mädchen mit den Zöpfen ist ein leerer Platz. <i>Dein</i> Platz.</p><p class="paper">Auf der Rückseite, in Kinderschrift: „Lena &amp; ich – für immer.“<br>Darunter, in Mamas Schrift: „Zweiter Teil des Codes: <mark>NULL</mark>. Ein Kreis hat kein Ende.“</p>`,
+    letter: `<p class="paper">Liebes Geschwisterchen,<br><br>ich bin nicht weggelaufen. Wir haben Verstecken gespielt, und ich habe mich so gut versteckt, dass du mich nicht mehr gefunden hast. Dann bist du eingeschlafen und ich konnte nicht mehr zurück.<br><br>Das Haus hält mich fest, weil ich noch darauf warte, dass du <i>mich</i> rufst. Wenn du das hier liest: Geh nicht einfach. Ruf meinen Namen an der Tür, dann darf ich auch gehen.<br><br>Der letzte Teil des Codes: <mark>SIEBEN</mark>. So alt war ich.<br><br>Deine Lena</p>`
+  };
+
+  // ---------- Sound ----------
+  let AC = null, muted = false;
+  function snd(f, d = .1, type = 'sine', v = .05, slide = 0, delay = 0) {
+    if (muted) return;
+    try {
+      AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+      const o = AC.createOscillator(), g = AC.createGain(), n = AC.currentTime + delay;
+      o.type = type; o.frequency.setValueAtTime(f, n);
+      if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(25, f + slide), n + d);
+      g.gain.setValueAtTime(v, n); g.gain.exponentialRampToValueAtTime(.0001, n + d);
+      o.connect(g); g.connect(AC.destination); o.start(n); o.stop(n + d);
+    } catch (e) {}
+  }
+  const sfx = {
+    step: () => snd(80, .15, 'sine', .09, -35),
+    creak: () => snd(130, .7, 'sawtooth', .025, -60),
+    got: () => [523, 659, 784].forEach((f, i) => snd(f, .25, 'triangle', .05, 0, i * .1)),
+    ring: () => [0, .25, .5, .75].forEach(d => { snd(880, .12, 'square', .03, 0, d); snd(700, .12, 'square', .03, 0, d + .12); }),
+    scare: () => snd(55, 1.2, 'sawtooth', .08, -20),
+    click: () => snd(300, .05, 'square', .03)
+  };
+  $('mute').onclick = () => { muted = !muted; $('mute').textContent = muted ? '🔇' : '🔊'; };
+
+  // ---------- Zustand ----------
+  let S = null, cur = [];
+  const has = k => !!S.inv[k];
+  const hints = () => HINTS.filter(has).length;
+  const clockMin = () => 1380 + S.steps * (247 / MAX);
+  function ver(id) { const th = R[id].th || []; return th.filter(t => S.steps >= t[0]).length; }
+
+  function say(t, c = '') {
+    S.log.push({ t, c });
+    renderLog();
+  }
+  function renderLog() {
+    const L = $('log');
+    L.innerHTML = S.log.slice(-8).map((m, i, a) => `<p class="${m.c} ${i < a.length - 1 ? 'old' : ''}">${m.t}</p>`).join('');
+    L.scrollTop = L.scrollHeight;
+  }
+
+  const EVENTS = [
+    { at: 6,   t: 'Irgendwo im Haus schlägt eine Tür zu.', s: () => sfx.creak() },
+    { at: 18,  t: 'Ein leises Kinderlachen. Du hältst den Atem an – Stille.', s: () => sfx.scare() },
+    { at: 45,  t: 'Hinter dir knarren die Dielen. Du drehst dich um. Nichts.', s: () => sfx.creak() },
+    { at: 62,  t: 'Es riecht plötzlich nach Kerzenwachs und kaltem Rauch.' },
+    { at: 100, t: 'Die Luft wird dünn. Es ist, als würde das Haus ungeduldig werden. Bald ist es drei.', s: () => sfx.scare() },
+    { at: 125, t: 'Die Wände scheinen näher zu rücken. Du hörst ein leises Ticken – von der Standuhr, die doch stillsteht.', s: () => sfx.scare() }
+  ];
+
+  function updateHUD() {
+    const m = Math.floor(clockMin()) % 1440;
+    const c = $('clock');
+    c.textContent = '🕰 ' + String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+    c.classList.toggle('late', S.steps > MAX * .75);
+    $('scene').style.setProperty('--ta', Math.min(.35, S.steps / MAX * .35));
+    let h = '';
+    for (const k in ITEMS) {
+      const isH = HINTS.includes(k);
+      h += `<button class="slot ${has(k) ? '' : 'empty'} ${isH ? 'hint' : ''}" data-k="${k}" title="${has(k) ? ITEMS[k].n : '???'}">${has(k) ? ITEMS[k].e : '❔'}</button>`;
+    }
+    const d = i => [S.inv.diary, S.inv.photo, S.inv.letter][i] ? CODE[i] : '?';
+    if (hints()) h += `<span id="code">Code: ${d(0)}·${d(1)}·${d(2)}</span>`;
+    $('inv').innerHTML = h;
+  }
+
+  function tick() {
+    updateHUD();
+    for (const ev of EVENTS) if (!S.fired[ev.at] && S.steps >= ev.at) { S.fired[ev.at] = 1; say(ev.t, 'ev'); ev.s && ev.s(); }
+    checkChanges();
+    if (S.steps >= MAX && !S.over) ending('behaelt');
+  }
+  function cost(n = 1) { S.steps += n; tick(); }
+
+  function glitch() { const s = $('scene'); s.classList.remove('glitch'); void s.offsetWidth; s.classList.add('glitch'); }
+  function checkChanges() {
+    const th = R[S.room].th || [], v = ver(S.room), last = S.seen[S.room] || 0;
+    if (v > last) {
+      for (let i = last; i < v; i++) say('⚠ ' + th[i][1], 'chg');
+      S.seen[S.room] = v; sfx.creak(); glitch();
+    }
+  }
+
+  // ---------- Hilfsfunktionen für Räume ----------
+  const hot = (l, e, x, y, s, run, o = {}) => ({ k: 'look', l, e, x, y, s, run, ...o });
+  const exit = (to, l, x, y, o = {}) => ({
+    k: 'go', l, e: o.e || '🚪', x, y, s: o.s || 22,
+    run() {
+      if (o.ok && !o.ok()) { say(o.why); return; }
+      if (o.pre && !S.flags['pre_' + to]) { S.flags['pre_' + to] = 1; say(o.pre); }
+      go(to);
+    }
+  });
+  const L = txt => () => { say(txt); cost(); render(); };
+  function give(k) { S.inv[k] = 1; sfx.got(); say(`<b>${ITEMS[k].e} ${ITEMS[k].n}</b> gefunden!`, 'got'); updateHUD(); if (HINTS.includes(k)) reader(k); }
+
+  // ---------- Räume ----------
+  const R = {
+    schlaf: {
+      name: 'Schlafzimmer', wall: '#3b2f35', floor: '#241a1d',
+      th: [[50, 'Auf dem Bett sitzt jetzt ein kleiner Teddybär. Das war vorhin nicht so.']],
+      desc: () => 'Ein großes Schlafzimmer. Das Bett ist ungemacht, die Vorhänge hängen in Fetzen. Durch das vergitterte Fenster fällt fahles Mondlicht. Eine Tür führt hinaus in den Flur.',
+      deco: v => v >= 1 ? [{ e: '🧸', x: 26, y: 52, s: 9 }] : [],
+      hot: v => [
+        hot('Bett', '🛏️', 30, 62, 30, L('In der Matratze ist eine Kuhle – deine. Das Kissen riecht nach Staub und etwas Vertrautem, das du nicht benennen kannst.')),
+        hot('Kommode', '🗄️', 62, 64, 20, () => {
+          if (!S.flags.zettel) { S.flags.zettel = 1; say('In der obersten Schublade liegt ein Zettel in Kinderschrift: <i>„Such zuerst, wo es einmal warm war.“</i> Der Rest ist abgerissen.'); }
+          else say('Außer dem Zettel ist die Kommode leer.');
+          cost(); render();
+        }),
+        hot('Fenster', '🪟', 82, 30, 20, L(v >= 1
+          ? 'Im Nebel steht eine kleine Gestalt neben dem Schaukelgerüst. Sie dreht den Kopf zu dir – du weichst zurück. Als du wieder hinsiehst, schwingt nur die leere Schaukel.'
+          : 'Die Gitterstäbe sind kalt und fest verschraubt. Draußen: Nebel, ein verwilderter Garten und ein altes Schaukelgerüst.')),
+        exit('flur', 'Zum Flur', 10, 58, { s: 28 })
+      ]
+    },
+
+    flur: {
+      name: 'Flur', wall: '#34303a', floor: '#241f1d',
+      th: [[40, 'Das Telefon klingelt – obwohl die Leitung tot sein müsste.'], [100, 'Von der Haustür kommt ein dumpfes Klopfen. Dreimal. Dann Stille.']],
+      desc: () => 'Ein langer Flur, die Tapete löst sich in Streifen. Türen führen zum Schlafzimmer, Wohnzimmer, zur Küche und zum Bad. Eine Treppe führt nach oben ins Dunkel, daneben liegt eine schwere Tür zum Keller. Die Haustür trägt ein Zahlenschloss.',
+      deco: () => [],
+      hot: v => [
+        exit('schlaf', 'Schlafzimmer', 8, 50, { s: 20 }),
+        exit('wohn', 'Wohnzimmer', 22, 50, { s: 20 }),
+        exit('kueche', 'Küche', 36, 50, { s: 20 }),
+        exit('bad', 'Bad', 50, 50, { s: 20 }),
+        exit('keller', 'Kellertür', 63, 50, {
+          e: '🕳️', s: 18, ok: () => has('key'),
+          why: 'Die Kellertür ist verschlossen. Das Schloss ist alt und rostig – hier passt nur ein ganz bestimmter Schlüssel.',
+          pre: 'Der rostige Schlüssel dreht sich knirschend im Schloss. Kalte, feuchte Luft strömt dir entgegen.'
+        }),
+        exit('kinder', 'Treppe nach oben', 76, 50, {
+          e: '🪜', s: 20, ok: () => has('light'),
+          why: 'Die Treppe nach oben liegt in völliger Dunkelheit. Ohne Licht würdest du schon auf der ersten Stufe stolpern.',
+          pre: 'Dein Lichtkegel tastet die Stufen hinauf. Sie ächzen bei jedem Schritt.'
+        }),
+        hot('Haustür', '🚪', 91, 50, 26, () => openLock(), { cls: '' }),
+        hot('Telefon', '📞', 30, 80, 12, () => {
+          if (v < 1) say('Ein altes Wählscheibentelefon. Die Leitung ist tot – kein Ton.');
+          else if (!S.flags.phone) {
+            S.flags.phone = 1;
+            say('Du hebst ab. Rauschen, dann eine Kinderstimme, ganz leise: <i>„… hörst du mich? Such weiter oben … ich warte … unterm Dach …“</i> Klick. Die Leitung ist wieder tot.');
+            sfx.scare();
+          } else say('Nur noch Rauschen.');
+          cost(); render();
+        }, { cls: v >= 1 && !S.flags.phone ? 'shake' : '' }),
+        hot('Garderobe', '🧥', 52, 80, 14, L('Mäntel, die nach Mottenkugeln riechen. In einer Tasche steckt ein vergilbtes Bonbon. Du lässt es lieber liegen.'))
+      ]
+    },
+
+    wohn: {
+      name: 'Wohnzimmer', wall: '#3a3236', floor: '#2b2220',
+      th: [[20, 'Das Gemälde über dem Kamin … irgendetwas daran ist anders als vorhin.'], [70, 'Am Fenster steht jemand! Du erstarrst – dann bewegt sich nur der Vorhang. Da ist niemand.']],
+      desc: () => 'Ein weitläufiges Wohnzimmer. Möbel unter Laken, Mottenlöcher in den Vorhängen. Über dem Kamin hängt ein Familiengemälde, in der Ecke steht eine große Standuhr.',
+      deco: v => [{ e: '🪟', x: 82, y: 32, s: 20 }].concat(v >= 2 ? [{ e: '👤', x: 82, y: 34, s: 12, o: .55 }] : []),
+      hot: v => [
+        hot('Kamin', '🔥', 24, 66, 22, () => {
+          if (!has('key')) { say('Der Kamin ist kalt. Du greifst in die Asche – und deine Finger berühren etwas Hartes: ein Schlüssel!'); give('key'); }
+          else say('Nur kalte Asche.');
+          cost(); render();
+        }, { f: 'grayscale(1) brightness(.6)' }),
+        hot('Gemälde', '🖼️', 24, 30, 14, L(v === 0
+          ? 'Ein Familienporträt: ein Mann, eine Frau, ein Kind mit ernstem Blick – und ein kleines Mädchen mit Zöpfen, das lacht.'
+          : v === 1
+            ? 'Das Gesicht des kleinen Mädchens ist weggekratzt. Die Farbe darunter ist noch feucht.'
+            : 'Das Mädchen ist ganz verschwunden, nur ein heller Fleck bleibt. Und das Kind in der Mitte sieht jetzt direkt in deine Richtung.')),
+        hot('Standuhr', '🕰️', 50, 54, 26, () => {
+          S.flags.clock = 1;
+          say('Die Standuhr ist um <b>3:07 Uhr</b> stehen geblieben. Der Pendel hängt reglos. Du hast das Gefühl, dass diese Uhrzeit wichtig ist.');
+          cost(); render();
+        }),
+        hot('Bücherregal', '📚', 69, 56, 20, L('Märchenbücher, Kochbücher, ein Lexikon. Auf einem Buch steht in Kinderschrift: <i>„Hänsel und Gretel – für Lena“</i>.')),
+        hot('Sofa', '🛋️', 48, 82, 22, L('Unter dem Laken: Staub, Mäusekot, eine eingerollte Decke. Nichts Brauchbares.')),
+        exit('flur', 'Zum Flur', 92, 62, { s: 22 })
+      ]
+    },
+
+    kueche: {
+      name: 'Küche', wall: '#303a38', floor: '#222a27',
+      th: [[30, 'Die Küche riecht seltsam – nach frisch gekochtem Essen? Das ist unmöglich.'], [80, 'Alle Stühle sind jetzt umgekippt. Der Wasserhahn tropft nicht mehr. Die Stille drückt in deinen Ohren.']],
+      desc: () => 'Eine Küche wie aus einer anderen Zeit. Geschirr stapelt sich im Spülstein, ein Wasserhahn tropft – <i>drip … drip …</i> In der Ecke eine schwere Hintertür mit Riegel, dahinter wabert Nebel.',
+      deco: v => (v >= 1 ? [{ e: '🍲', x: 55, y: 60, s: 9 }] : []).concat(v >= 2 ? [{ e: '🪑', x: 70, y: 82, s: 12, r: 90 }, { e: '🪑', x: 40, y: 84, s: 12, r: -80 }] : []),
+      hot: v => [
+        hot('Küchenschrank', '🗄️', 20, 54, 22, () => {
+          if (!S.flags.keks) { S.flags.keks = 1; say('Teller, Tassen, eine Keksdose. In der Dose liegt ein Zettel: <i>„Der Keller gefällt Mama nicht. Aber dort ist alles, was wir versteckt haben.“</i>'); }
+          else say('Nur Geschirr. Die Keksdose ist leer.');
+          cost(); render();
+        }),
+        hot('Kühlschrank', '🧊', 36, 50, 22, L('Der Gestank lässt dich zurückweichen. Hinter einer Milchflasche aus einem anderen Jahrzehnt – nichts. Schnell zu.')),
+        hot('Tisch', '🍽️', 52, 74, 22, L(v === 0
+          ? 'Ein Tisch mit drei Stühlen, alle verstaubt. Zwei stehen eng beieinander, einer ist abgerückt.'
+          : v === 1
+            ? 'Der Tisch ist gedeckt – drei Teller, sauber, staubfrei. Einer davon ist noch warm.'
+            : 'Die drei Teller sind verschwunden, nur Kreidestriche auf der Tischplatte: sieben kleine Striche.')),
+        hot('Wasserhahn', '🚰', 66, 48, 14, L('Drip … drip … Das Wasser hat eine Rostspur in das Becken gegraben. Wer dreht das Wasser noch an?')),
+        hot('Hintertür', '🚪', 82, 52, 28, () => backDoor()),
+        exit('flur', 'Zum Flur', 8, 60, { s: 22 })
+      ]
+    },
+
+    bad: {
+      name: 'Badezimmer', wall: '#2f3a3e', floor: '#1f2a2c',
+      th: [[25, 'Der Spiegel ist beschlagen – von innen?'], [75, 'Auf dem Spiegel steht wieder etwas. Neue Schrift.']],
+      desc: () => 'Ein enges Bad mit gesprungenen Fliesen. Eine Wanne mit klarem Wasser, ein kleiner Medizinschrank und ein Spiegel über dem Waschbecken.',
+      deco: v => v === 1 ? [{ t: 'HINTER DIR', x: 40, y: 38 }] : v >= 2 ? [{ t: 'KOMM HOCH', x: 40, y: 38 }] : [],
+      hot: v => [
+        hot('Spiegel', '🪞', 40, 38, 26, L(v === 0
+          ? 'Dein Gesicht im staubigen Spiegel: blass, müde. Du wischst mit dem Ärmel – dahinter bist nur du. Noch.'
+          : v === 1
+            ? 'In Kinderschrift steht auf dem beschlagenen Glas: <i>HINTER DIR</i>. Du drehst dich um. Nichts. Als du zurückblickst, ist die Schrift verwischt.'
+            : 'Auf dem Glas steht: <i>KOMM HOCH</i>. Darunter malt jemand mit dem Finger einen kleinen Kreis.')),
+        hot('Wanne', '🛁', 68, 68, 28, L('Das Wasser in der Wanne ist eiskalt und klar – obwohl der Hahn trocken ist und das Haus seit Jahren leer steht. Du berührst es nicht.')),
+        hot('Medizinschrank', '💊', 18, 44, 14, L('Verstaubte Pillendosen, ein Päckchen Kinderpflaster mit Tiermotiven. Nichts, was dir hier raushilft.')),
+        exit('flur', 'Zum Flur', 92, 60, { s: 22 })
+      ]
+    },
+
+    keller: {
+      name: 'Keller', wall: '#222226', floor: '#141416', dark: true,
+      th: [[60, 'Hinter dir fällt ein Einmachglas aus dem Regal und zerspringt. Niemand ist hier. Oder?']],
+      desc: () => has('light')
+        ? 'Dein Lichtkegel gleitet über Steinwände, Einmachgläser, eine Werkbank und ein altes Fahrrad. In der Ecke steht eine Holzkiste mit dem Namen <b>LENA</b>.'
+        : 'Stockfinster. Es riecht nach feuchter Erde und altem Holz. Du tastest dich die Stufen hinab. Neben der Tür fühlen deine Finger ein Regal.',
+      hot: v => !has('light') ? [
+        hot('Regal ertasten', '🗄️', 50, 50, 20, () => {
+          say('Deine Hände gleiten über Holz, Dosen, Spinnweben – und dann über etwas Schweres, Kaltes, Rundes: eine <b>Taschenlampe</b>! Du schaltest sie ein.');
+          give('light'); say(R.keller.desc()); say('<i>Tipp: Der Lichtkegel folgt deinem Mauszeiger (oder Finger).</i>', 'ev'); cost(); render();
+        }),
+        exit('flur', 'Treppe hinauf', 10, 58, { e: '🪜' })
+      ] : [
+        hot('Werkbank', '🔧', 30, 62, 20, () => {
+          if (!has('diary')) { say('Unter einem Schraubstock klemmt eine vergilbte Seite aus einem Tagebuch.'); give('diary'); }
+          else say('Werkzeug, Nägel, Sägespäne. Nichts weiter.');
+          cost(); render();
+        }),
+        hot('Kiste „LENA“', '🧰', 58, 72, 18, L('Eine Holzkiste, beschriftet mit „LENA“. Das Vorhängeschloss ist verrostet und gibt nicht nach. Als du sie anhebst, klappert es leise darin – wie Murmeln.')),
+        hot('Einmachgläser', '🫙', 82, 46, 16, L('Pflaumen, „1994“. Dahinter an der Wand: sieben Kreidestriche. Jemand hat gezählt.')),
+        exit('flur', 'Treppe hinauf', 8, 58, { e: '🪜' })
+      ]
+    },
+
+    kinder: {
+      name: 'Kinderzimmer', wall: '#3a3548', floor: '#2a2433', dark: true,
+      th: [[35, 'Das Schaukelpferd bewegt sich. Ganz langsam. Vor und zurück.'], [90, 'Die Spieluhr spielt – von allein. Die Melodie bricht ab, sobald du hinsiehst.']],
+      desc: () => 'Ein Zimmer mit zwei kleinen Betten und Sternen auf der Tapete. Ein Schaukelpferd, eine Spielzeugkiste, eine Spieluhr auf der Fensterbank. In der Decke hängt eine Luke zum Dachboden mit einer Leiter.',
+      deco: () => [{ e: '⭐', x: 15, y: 18, s: 5 }, { e: '⭐', x: 35, y: 12, s: 4 }, { e: '⭐', x: 62, y: 20, s: 5 }, { e: '🌙', x: 88, y: 16, s: 8 }],
+      hot: v => [
+        hot('Spielzeugkiste', '📦', 20, 70, 20, () => {
+          if (!has('photo')) { say('Unter Bauklötzen und einer Stoffpuppe liegt ein zerrissenes Foto.'); give('photo'); }
+          else say('Bauklötze, eine Stoffpuppe mit nur einem Auge. Sie scheint dich anzusehen.');
+          cost(); render();
+        }),
+        hot('Schaukelpferd', '🐴', 42, 66, 22, L(v < 1 ? 'Ein hölzernes Schaukelpferd. Es steht still.' : 'Das Pferd wippt – langsam, vor und zurück. Obwohl kein Luftzug geht.'), { cls: v >= 1 ? 'shake' : '' }),
+        hot('Spieluhr', '🎵', 64, 46, 12, L('Du drehst an der Kurbel. Eine zerbrechliche Melodie, ein Schlaflied. In der Dunkelheit meinst du, jemanden mitsummen zu hören.')),
+        hot('Betten', '🛏️', 82, 68, 24, L('Zwei Betten. Über einem steht „Lena“. Über dem anderen hängt ein verblichenes Namensschild. Es ist dein Bett. Du weißt es plötzlich – und dir wird kalt.')),
+        hot('Dachbodenluke', '🪜', 50, 18, 14, () => {
+          if (!S.flags['pre_dach']) { S.flags['pre_dach'] = 1; say('Du ziehst an der Leiter. Staub rieselt herab. Du kletterst hinauf.'); }
+          go('dach');
+        }, { k: 'go' }),
+        exit('flur', 'Treppe hinunter', 8, 58)
+      ]
+    },
+
+    dach: {
+      name: 'Dachboden', wall: '#2c2a24', floor: '#1d1b17', dark: true,
+      th: [[110, 'Der Streifen Nebellicht durch die Dachluke ist erloschen. Es wird dunkler hier oben.']],
+      desc: () => 'Schräge Balken, Spinnweben wie Vorhänge. Alte Koffer, ein Schaukelstuhl und etwas Großes unter einem Laken. Durch eine Luke fällt ein Streifen Nebellicht.',
+      deco: () => [{ e: '🕸️', x: 12, y: 16, s: 14 }, { e: '🕸️', x: 90, y: 14, s: 12 }],
+      hot: v => [
+        hot('Koffer', '🧳', 30, 70, 22, () => {
+          if (!has('letter')) { say('Ein Lederkoffer mit zwei Schnallen. Kinderkleider, ein Stoffhase – und darunter ein Brief.'); give('letter'); }
+          else say('Kinderkleider, ein Stoffhase. Er lächelt schief.');
+          cost(); render();
+        }),
+        hot('Schaukelstuhl', '🪑', 58, 70, 22, L('Er wippt leicht. Auf der Lehne liegt ein rotes Zopfgummi.')),
+        hot('Laken', '👻', 80, 56, 22, L('Du ziehst das Laken weg: ein Standspiegel. Du siehst dich – und hinter dir ein kleines Mädchen mit Zöpfen. Du fährst herum. Niemand. Im Spiegel ist sie auch weg.')),
+        exit('kinder', 'Leiter hinab', 10, 50, { e: '🪜' })
+      ]
+    }
+  };
+
+  // ---------- Rendering ----------
+  function render() {
+    if (!S) return;
+    const r = R[S.room], v = ver(S.room);
+    const dark = r.dark && !has('light');
+    const sc = $('scene');
+    sc.style.setProperty('--wall', r.wall); sc.style.setProperty('--floor', r.floor);
+    sc.classList.toggle('blackout', !!dark);
+    sc.classList.toggle('torch', !!r.dark && !dark);
+    $('rname').textContent = r.name;
+    $('dark').textContent = dark ? 'Es ist stockfinster. Du siehst nichts. Aber du kannst tasten …' : '';
+    cur = r.hot(v);
+    let html = '';
+    if (!dark) {
+      for (const d of (r.deco ? r.deco(v) : [])) {
+        if (d.t) html += `<div class="scrawl" style="left:${d.x}%;top:${d.y}%">${d.t}</div>`;
+        else html += `<div class="it" style="left:${d.x}%;top:${d.y}%;--s:${d.s};opacity:${d.o || 1};${d.r ? `rotate:${d.r}deg;` : ''}">${d.e}</div>`;
+      }
+      cur.forEach((h, i) => {
+        html += `<button class="it ${h.k === 'go' ? 'go' : ''} ${h.cls || ''}" data-i="${i}" style="left:${h.x}%;top:${h.y}%;--s:${h.s};${h.f ? `filter:${h.f};` : ''}" title="${h.l}">${h.e}<small>${h.l}</small></button>`;
+      });
+    }
+    $('stage').innerHTML = html;
+    let a = '';
+    const looks = cur.map((h, i) => [h, i]).filter(([h]) => h.k === 'look');
+    const gos = cur.map((h, i) => [h, i]).filter(([h]) => h.k === 'go');
+    if (looks.length) a += `<div class="grp"><span>Untersuchen</span>${looks.map(([h, i]) => `<button data-i="${i}">${h.l}</button>`).join('')}</div>`;
+    a += `<div class="grp"><span>Gehen</span>${gos.map(([h, i]) => `<button class="go" data-i="${i}">→ ${h.l}</button>`).join('')}<button data-think="1">💭 Nachdenken</button></div>`;
+    $('acts').innerHTML = a;
+    updateHUD();
+  }
+  function press(i) { if (S.over || !$('modal').classList.contains('hidden')) return; sfx.click(); cur[i].run(); }
+  $('scene').addEventListener('click', e => { const b = e.target.closest('button.it'); if (b) press(+b.dataset.i); });
+  $('acts').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.think) think(); else press(+b.dataset.i);
+  });
+  $('inv').addEventListener('click', e => {
+    const b = e.target.closest('.slot'); if (!b || !S) return;
+    const k = b.dataset.k;
+    if (!has(k)) return;
+    if (HINTS.includes(k)) reader(k); else say(`<b>${ITEMS[k].e} ${ITEMS[k].n}:</b> ${ITEMS[k].d}`);
+  });
+  function trackLight(e) {
+    const r = $('scene').getBoundingClientRect(), t = e.touches ? e.touches[0] : e;
+    $('scene').style.setProperty('--mx', (t.clientX - r.left) + 'px'); $('scene').style.setProperty('--my', (t.clientY - r.top) + 'px');
+  }
+  $('scene').addEventListener('mousemove', trackLight);
+  $('scene').addEventListener('touchmove', trackLight, { passive: true });
+  function sizeUnit() { const s = $('scene'); s.style.setProperty('--u', Math.min(s.clientHeight, s.clientWidth / 1.7) / 100 + 'px'); }
+  addEventListener('resize', sizeUnit);
+
+  // ---------- Aktionen ----------
+  function go(to) {
+    S.room = to; S.steps++; sfx.step();
+    say(`<b>${R[to].name}.</b> ${R[to].desc(ver(to))}`);
+    tick(); render();
+  }
+  function think() {
+    if (S.over) return;
+    let t;
+    if (!has('key')) t = 'Du brauchst einen Schlüssel – aber wo? Der Zettel sagte: dort, wo es einmal warm war. Vielleicht ein Raum mit einem Kamin …';
+    else if (!has('light')) t = 'Der Schlüssel passt sicher zu der schweren Tür im Flur: dem Keller. Dort unten wird es dunkel sein – du musst tasten.';
+    else if (hints() < 3) {
+      const o = [];
+      if (!has('diary')) o.push('Der Keller verbirgt mehr, als nur Dunkelheit.');
+      if (!has('photo')) o.push('Im Kinderzimmer oben liegt noch etwas aus der Vergangenheit.');
+      if (!has('letter')) o.push(S.flags.phone ? 'Die Stimme sagte: „unterm Dach“.' : 'Es gibt noch einen Ort, der höher liegt als das Kinderzimmer.');
+      t = o.join(' ') + ' Du hast ' + hints() + ' von 3 Hinweisen.';
+    } else t = 'Drei Ziffern: 3 – 0 – 7. Die Haustür wartet. Und da ist ein Name, den du rufen willst …';
+    say('💭 <i>' + t + '</i>'); cost(); render();
+  }
+  function reader(k) {
+    S.flags['read_' + k] = 1;
+    modal(`<h2>${ITEMS[k].e} ${ITEMS[k].n}</h2>${READ[k]}<button class="btn" data-a="close">Weiter</button>`);
+  }
+
+  // ---------- Modal ----------
+  const modalEl = $('modal');
+  function modal(html) { $('mbox').innerHTML = html; modalEl.classList.remove('hidden'); }
+  function closeModal() { modalEl.classList.add('hidden'); }
+  modalEl.addEventListener('click', e => {
+    const b = e.target.closest('[data-a]');
+    if (!b) { if (e.target === modalEl) closeModal(); return; }
+    const a = b.dataset.a;
+    if (a === 'close') closeModal();
+    else if (a[0] === 'u' || a[0] === 'd') {
+      const i = +a[1]; S.code[i] = (S.code[i] + (a[0] === 'u' ? 1 : 9)) % 10; sfx.click(); lockUI();
+    } else if (a === 'try') tryCode();
+    else if (a === 'flee') { closeModal(); fleeBack(); }
+    else if (a.startsWith('end:')) { closeModal(); ending(a.slice(4)); }
+  });
+  addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  function openLock() {
+    if (!S.code) S.code = [0, 0, 0];
+    S.lockMsg = 'Die Haustür ist mit einem schweren Zahlenschloss gesichert. Drei Ziffern.';
+    lockUI();
+  }
+  function lockUI() {
+    const note = [S.inv.diary ? CODE[0] : '?', S.inv.photo ? CODE[1] : '?', S.inv.letter ? CODE[2] : '?'].join(' · ');
+    modal(`<h2>🔢 Zahlenschloss</h2><p class="dim">${S.lockMsg}</p>
+      <div class="digits">${S.code.map((d, i) => `<div class="dg"><button data-a="u${i}">▲</button><div>${d}</div><button data-a="d${i}">▼</button></div>`).join('')}</div>
+      <p class="err" id="err"></p><p class="dim" style="text-align:center">Notizen: ${note}</p>
+      <div style="text-align:center"><button class="btn" data-a="try">Öffnen</button><button class="btn alt" data-a="close">Zurück</button></div>`);
+  }
+  function tryCode() {
+    if (S.code.join('') === CODE.join('')) {
+      sfx.got();
+      if (hints() === 3) {
+        modal(`<h2>🚪 Die Haustür ist offen</h2>
+          <p>Das Schloss springt auf. Kalte Morgenluft strömt herein – und hinter dir, im Haus, wird es ganz still. Als würde alles den Atem anhalten.</p>
+          <p>Du hast alle Hinweise gelesen. Was tust du?</p>
+          <button class="btn" data-a="end:freiheit">Hinausgehen</button><br>
+          <button class="btn" data-a="end:frieden">Lenas Namen rufen</button><br>
+          <button class="btn alt" data-a="end:bleiben">Im Haus bleiben</button><br>
+          <button class="btn alt" data-a="close">Noch nicht</button>`);
+      } else { closeModal(); ending('halb', 'guess'); }
+    } else {
+      sfx.click(); S.steps++; tick();
+      if (S.over) return;
+      $('err').textContent = 'Klack. Das Schloss bleibt zu.';
+    }
+  }
+  function backDoor() {
+    if (!has('key')) { say('Die Hintertür ist abgeschlossen. Das Schloss ist alt – es braucht einen Schlüssel.'); return; }
+    if (!has('light')) { say('Du schließt auf und spähst hinaus: Nebel, pechschwarz. Ohne Licht würdest du dich im Garten verirren. Du schließt wieder zu.'); cost(); render(); return; }
+    modal(`<h2>🚪 Die Hintertür</h2><p>Der Schlüssel dreht sich. Draußen: Nebel, ein Gartentor in der Ferne, dein Lichtkegel zeigt den Weg. Du könntest einfach laufen.</p>
+      <p class="dim">Du hast ${Object.keys(S.inv).length} von 5 Gegenständen, davon ${hints()} von 3 Hinweisen.</p>
+      <button class="btn" data-a="flee">Fliehen</button><button class="btn alt" data-a="close">Noch nicht</button>`);
+  }
+  function fleeBack() { hints() === 0 ? ending('ahnungslos') : ending('halb', hints() === 3 ? 'back3' : 'back'); }
+
+  // ---------- Enden ----------
+  const ENDS = {
+    ahnungslos: { n: 1, t: 'Ahnungslos', x: () => `<p>Das Schloss springt auf. Du stolperst in den Garten, und der Nebel schluckt das Haus hinter dir. Du rennst durch das verrostete Tor, die Straße hinab, bis die Lichter einer Tankstelle auftauchen.</p><p>Du weißt nicht, wo du warst. Du weißt nicht, warum. Nur manchmal, nachts, wenn es um 3:07 Uhr plötzlich ganz still wird, hörst du ein Kinderlachen, weit weg.</p><p><i>Du bist entkommen – aber du hast nichts verstanden.</i></p>` },
+    halb: { n: 2, t: 'Halbe Wahrheit', x: v => (v === 'guess'
+        ? `<p>Du drehst die Ziffern: 3 – 0 – 7. Es klickt. Die Zeit, in der die Standuhr stehen blieb, war der Schlüssel. Du öffnest die Tür und gehst hinaus ins Morgengrau.</p>`
+        : v === 'back3'
+          ? `<p>Du kennst jetzt die ganze Geschichte – und läufst trotzdem. Durch die Hintertür, in den Nebel, ohne dich umzudrehen.</p>`
+          : `<p>Du schließt die Hintertür auf und läufst in den Nebel, die Taschenlampe zitternd in der Hand.</p>`)
+        + `<p>Du kennst einen Namen: <b>Lena</b>. Du hast Bruchstücke gelesen, ein Foto, eine Seite, die dich nicht loslässt. Aber das Ganze fehlt. Du fährst weg – und das Gefühl, etwas zurückgelassen zu haben, fährt mit.</p><p><i>Du hast einen Teil der Wahrheit. Der Rest bleibt im Haus.</i></p>` },
+    freiheit: { n: 3, t: 'Freiheit', x: () => `<p>Du trittst hinaus. Das Morgenlicht ist blendend, Vögel singen, als hätte es das alles nie gegeben. Hinter dir fällt die Tür leise ins Schloss.</p><p>Du hast alles gelesen, alles verstanden – und gehst trotzdem, ohne ein Wort. Im Haus, oben im Kinderzimmer, brennt ein winziges Licht.</p><p><i>Du bist frei. Aber Lena wartet noch immer.</i></p>` },
+    frieden: { n: 4, t: 'Lenas Frieden', x: () => `<p>„<b>Lena</b>.“</p><p>Dein Flüstern hallt durch das ganze Haus. Es holt tief Luft. Zwischen den Dielen, in den Wänden, im Dach – ein Seufzen wie von jemandem, der lange gewartet hat.</p><p>Eine kleine, warme Hand schiebt sich in deine. Du siehst sie nicht, aber du spürst ihr Lachen. Und jetzt erinnerst du dich: Ihr habt Verstecken gespielt. Du hast gezählt, bist müde geworden und hast aufgehört zu suchen. Es war nie deine Schuld – nur ein Kind, das eingeschlafen ist.</p><p>Die Haustür schwingt auf. Sonnenlicht. Die Hand lässt los, und für einen Augenblick tanzen zwei Schatten über die Schwelle – dann ist da nur noch Licht. Das Haus knackt ein letztes Mal und schläft ein.</p><p><i>Du hast sie endlich gefunden. Und sie dich.</i></p>` },
+    bleiben: { n: 5, t: 'Für immer zu Hause', x: () => `<p>Du lässt die Klinke los und setzt dich auf die unterste Treppenstufe. Das Haus fühlt sich plötzlich warm an. Oben gehen Schritte, ein Lachen, eine Spieluhr.</p><p>Die Türen stehen offen, aber niemand geht hinaus. Draußen vergehen Jahre. Im Wohnzimmer hängt ein neues Gemälde: ein Mann, eine Frau, ein kleines Mädchen mit Zöpfen – und du, mit ernstem Blick.</p><p><i>Du bist wieder zu Hause. Für immer.</i></p>` },
+    behaelt: { n: 6, t: 'Das Haus behält dich', x: () => `<p>Es ist <b>3:07 Uhr</b>. Im Wohnzimmer schlägt die Standuhr – obwohl sie stillstand. Alle Türen fallen gleichzeitig zu. ${S && has('light') ? 'Die Taschenlampe flackert und erlischt.' : 'Die Dunkelheit wird dichter.'}</p><p>Hinter dir atmet etwas. Du drehst dich nicht um. Du kennst das Haus jetzt gut genug, um zu wissen, dass es nicht mehr wartet.</p><p><i>Um 3:07 Uhr hört das Haus auf zu warten. Und beginnt, dich zu behalten.</i></p>` }
+  };
+  const loadEnds = () => { try { return JSON.parse(localStorage.getItem('haus-enden') || '[]'); } catch (e) { return []; } };
+  function ending(id, variant) {
+    if (S.over) return;
+    S.over = true; closeModal();
+    const e = ENDS[id], found = loadEnds();
+    if (!found.includes(id)) { found.push(id); try { localStorage.setItem('haus-enden', JSON.stringify(found)); } catch (x) {} }
+    sfx[id === 'behaelt' || id === 'bleiben' ? 'scare' : 'got']();
+    $('ebox').innerHTML = `<div class="no">Ende ${e.n} von 6</div><h1>${e.t}</h1>${e.x(variant)}
+      <p class="dim" style="text-align:center">Gegenstände: ${Object.keys(S.inv).length} von 5 · Enden entdeckt: ${found.length} von 6</p>
+      <div style="text-align:center"><button class="btn" id="again">Noch einmal</button></div>`;
+    $('end').classList.remove('hidden');
+    $('again').onclick = () => { $('end').classList.add('hidden'); newGame(); };
+  }
+
+  // ---------- Start ----------
+  function newGame() {
+    S = { room: 'schlaf', steps: 0, inv: {}, flags: {}, seen: {}, fired: {}, log: [], over: false, code: [0, 0, 0] };
+    say('Du wachst auf. Staub in der Nase, Kälte in den Knochen. Das Letzte, woran du dich erinnerst, ist ein Regenabend, eine Landstraße und ein Haus, in dem noch Licht brannte. Jetzt ist es dunkel – und still. Nirgends tickt eine Uhr.');
+    say(`<b>${R.schlaf.name}.</b> ${R.schlaf.desc(0)}`);
+    sizeUnit(); render();
+  }
+  function showTitle() {
+    const n = loadEnds().length;
+    $('found').textContent = n ? `Enden entdeckt: ${n} von 6` : '';
+  }
+  $('startBtn').onclick = () => { $('title').classList.add('hidden'); newGame(); sfx.creak(); };
+  showTitle();
+})();
+</script>
+</body>
+</html>
