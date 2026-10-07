@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Sternenfänger</title>
+<style>
+  html,body{margin:0;height:100%;background:#0f172a;color:#f8fafc;font-family:-apple-system,system-ui,sans-serif;overflow:hidden;touch-action:none}
+  canvas{display:block;width:100vw;height:100vh}
+  #ui{position:fixed;inset:0;display:grid;place-items:center;text-align:center;background:rgba(15,23,42,.72);padding:24px}
+  #ui.hidden{display:none}
+  h1{font-size:clamp(32px,7vw,64px);margin:0 0 8px}
+  p{margin:6px 0;opacity:.8}
+  button{margin-top:18px;font-size:20px;padding:12px 32px;border:0;border-radius:999px;background:#facc15;color:#0f172a;font-weight:700;cursor:pointer}
+  button:hover{background:#fde047}
+  a{color:#94a3b8;font-size:14px;display:inline-block;margin-top:16px}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="ui">
+  <div>
+    <h1 id="title">Sternenfänger</h1>
+    <p id="msg">Sammle ⭐ Sterne und weiche den Asteroiden aus.</p>
+    <p>Steuerung: Pfeiltasten / A D, Maus oder Finger ziehen</p>
+    <p id="best"></p>
+    <button id="start">Spielen</button><br>
+    <a href="index.html">← Startseite</a>
+  </div>
+</div>
+<script>
+(() => {
+  const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+  const ui = document.getElementById('ui'), title = document.getElementById('title');
+  const msg = document.getElementById('msg'), bestEl = document.getElementById('best');
+  let W, H, dpr;
+  function resize() {
+    dpr = window.devicePixelRatio || 1;
+    W = innerWidth; H = innerHeight;
+    cv.width = W * dpr; cv.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  addEventListener('resize', resize); resize();
+
+  let best = 0;
+  try { best = +localStorage.getItem('sternenfaenger-best') || 0; } catch (e) {}
+  const showBest = () => bestEl.textContent = best ? 'Highscore: ' + best : '';
+  showBest();
+
+  const stars = Array.from({ length: 80 }, () => ({ x: Math.random(), y: Math.random(), s: Math.random() * 1.5 + .3 }));
+  const keys = {};
+  let target = null;
+  addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; if (e.key === ' ' && !running) start(); });
+  addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+  const pointer = e => { target = e.clientX; };
+  addEventListener('pointermove', e => { if (e.pointerType !== 'mouse' || running) pointer(e); });
+  addEventListener('pointerdown', pointer);
+  addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') target = null; });
+
+  let running = false, ship, items, score, lives, t, spawnT, last;
+
+  function start() {
+    ship = { x: W / 2, y: H - 80, r: 18 };
+    items = []; score = 0; lives = 3; t = 0; spawnT = 0; target = null;
+    running = true; ui.classList.add('hidden');
+    last = performance.now(); requestAnimationFrame(loop);
+  }
+  document.getElementById('start').onclick = start;
+
+  function end() {
+    running = false;
+    if (score > best) { best = score; try { localStorage.setItem('sternenfaenger-best', best); } catch (e) {} }
+    title.textContent = 'Game Over';
+    msg.textContent = 'Du hast ' + score + ' Punkte erreicht.';
+    showBest(); ui.classList.remove('hidden');
+  }
+
+  function spawn() {
+    const star = Math.random() < .35;
+    const r = star ? 12 : 14 + Math.random() * 22;
+    items.push({
+      star, r, x: r + Math.random() * (W - 2 * r), y: -r,
+      vy: (star ? 150 : 170 + Math.random() * 90) + t * 6,
+      vx: star ? 0 : (Math.random() - .5) * 80, rot: 0, vr: (Math.random() - .5) * 3
+    });
+  }
+
+  function update(dt) {
+    t += dt;
+    const speed = 480;
+    if (keys.arrowleft || keys.a) { ship.x -= speed * dt; target = null; }
+    if (keys.arrowright || keys.d) { ship.x += speed * dt; target = null; }
+    if (target !== null) ship.x += (target - ship.x) * Math.min(1, dt * 12);
+    ship.x = Math.max(ship.r, Math.min(W - ship.r, ship.x));
+    ship.y = H - 80;
+
+    spawnT -= dt;
+    if (spawnT <= 0) { spawn(); spawnT = Math.max(.25, .7 - t * .008); }
+
+    for (const it of items) {
+      it.y += it.vy * dt; it.x += it.vx * dt; it.rot += it.vr * dt;
+      if (it.x < it.r || it.x > W - it.r) it.vx *= -1;
+      if (Math.hypot(it.x - ship.x, it.y - ship.y) < it.r + ship.r - 4) {
+        it.dead = true;
+        if (it.star) score += 10;
+        else { lives--; flash = .3; if (lives <= 0) end(); }
+      } else if (it.y > H + it.r) {
+        it.dead = true;
+      }
+    }
+    items = items.filter(i => !i.dead);
+  }
+
+  let flash = 0;
+  function star(x, y, r, rot) {
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const a = rot + i * Math.PI / 5 - Math.PI / 2, rr = i % 2 ? r * .45 : r;
+      ctx[i ? 'lineTo' : 'moveTo'](x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+    }
+    ctx.closePath();
+  }
+
+  function draw() {
+    ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#e2e8f0';
+    for (const s of stars) {
+      const y = ((s.y * H + (running ? t : 0) * 30 * s.s) % H);
+      ctx.globalAlpha = .3 + s.s / 3; ctx.fillRect(s.x * W, y, s.s, s.s);
+    }
+    ctx.globalAlpha = 1;
+    if (!ship) return;
+
+    for (const it of items) {
+      if (it.star) {
+        ctx.fillStyle = '#facc15'; star(it.x, it.y, it.r, it.rot); ctx.fill();
+      } else {
+        ctx.fillStyle = '#64748b'; ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const a = it.rot + i * Math.PI / 4, rr = it.r * (i % 2 ? .82 : 1);
+          ctx[i ? 'lineTo' : 'moveTo'](it.x + Math.cos(a) * rr, it.y + Math.sin(a) * rr);
+        }
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+      }
+    }
+
+    // Schiff
+    ctx.fillStyle = flash > 0 ? '#f87171' : '#38bdf8';
+    ctx.beginPath();
+    ctx.moveTo(ship.x, ship.y - ship.r);
+    ctx.lineTo(ship.x + ship.r, ship.y + ship.r);
+    ctx.lineTo(ship.x, ship.y + ship.r * .5);
+    ctx.lineTo(ship.x - ship.r, ship.y + ship.r);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#fb923c';
+    ctx.beginPath(); ctx.moveTo(ship.x - 6, ship.y + ship.r * .6); ctx.lineTo(ship.x, ship.y + ship.r + 6 + Math.random() * 8); ctx.lineTo(ship.x + 6, ship.y + ship.r * .6); ctx.fill();
+
+    // HUD
+    ctx.fillStyle = '#f8fafc'; ctx.font = '700 22px system-ui,sans-serif'; ctx.textBaseline = 'top';
+    ctx.textAlign = 'left'; ctx.fillText('Punkte: ' + score, 16, 14);
+    ctx.textAlign = 'right'; ctx.fillText('♥'.repeat(Math.max(0, lives)), W - 16, 14);
+  }
+
+  function loop(now) {
+    if (!running) { draw(); return; }
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    flash = Math.max(0, flash - dt);
+    update(dt); draw();
+    if (running) requestAnimationFrame(loop);
+  }
+  draw();
+})();
+</script>
+</body>
+</html>
