@@ -1,0 +1,1133 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Das verlassene Haus 3D</title>
+<style>
+  :root{--gold:#facc15;--red:#f87171;--dim:#8d87a0}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;background:#000;color:#e7e3ef;font-family:Georgia,'Times New Roman',serif;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+  button{font-family:inherit;cursor:pointer;color:inherit}
+  #gl{position:fixed;inset:0;width:100%;height:100%;display:block}
+  #fear{position:fixed;inset:0;pointer-events:none;z-index:2;background:radial-gradient(ellipse at center,transparent 38%,rgba(140,0,0,.85) 100%);opacity:calc(var(--fear,0)*.95);animation:beat var(--beat,2s) infinite}
+  @keyframes beat{0%,100%{transform:scale(1)}12%{transform:scale(1.07)}24%{transform:scale(1)}36%{transform:scale(1.05)}}
+  #grain{position:fixed;inset:0;width:100%;height:100%;opacity:.13;image-rendering:pixelated;pointer-events:none;mix-blend-mode:overlay;z-index:3}
+  #blk{position:fixed;inset:0;background:#000;z-index:30;opacity:0;pointer-events:none;transition:opacity .45s;display:grid;place-items:center;color:#fca5a5;font-style:italic;padding:20px;text-align:center}
+  #blk.on{opacity:1;pointer-events:auto}
+  #jump{position:fixed;inset:0;z-index:25;display:none;place-items:center;background:radial-gradient(circle at 50% 40%,#a32222,#220508 60%,#000)}
+  #jump svg{height:86vh;animation:jj .09s infinite}
+  @keyframes jj{0%,100%{transform:translate(0)}50%{transform:translate(6px,-4px) scale(1.04)}}
+  #hud{position:fixed;left:0;right:0;top:0;z-index:5;display:flex;justify-content:space-between;align-items:flex-start;padding:10px 12px;pointer-events:none;text-shadow:0 1px 4px #000}
+  #inv{display:flex;gap:6px;align-items:center;flex-wrap:wrap;pointer-events:auto}
+  .slot{position:relative;width:40px;height:40px;border-radius:8px;border:1px solid #3a3450;background:rgba(10,8,16,.7);font-size:21px;display:grid;place-items:center;padding:0}
+  .slot.empty{opacity:.35;filter:grayscale(1)}
+  .slot.hint{border-color:#6d5bd0}
+  .slot.on{box-shadow:0 0 10px #facc15;border-color:#facc15}
+  #code{font:600 13px ui-monospace,monospace;color:var(--dim);margin-left:6px}
+  .hr{display:flex;gap:10px;align-items:center;font-variant-numeric:tabular-nums;font-weight:700;pointer-events:auto}
+  #clock.late{color:var(--red)}
+  #mute{background:rgba(10,8,16,.7);border:1px solid #3a3450;border-radius:50%;width:34px;height:34px}
+  #bars{position:fixed;left:12px;bottom:14px;z-index:5;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+  .bar{width:120px;height:7px;border-radius:5px;background:rgba(255,255,255,.12);overflow:hidden}
+  .bar i{display:block;height:100%;width:100%;background:#fde047}
+  .bar.st i{background:#60a5fa}
+  .bar.low i{background:#ef4444}
+  .lbl{font:11px system-ui,sans-serif;color:#9a94ad;margin-bottom:-3px}
+  #cross{position:fixed;left:50%;top:50%;width:6px;height:6px;margin:-3px;border-radius:50%;background:rgba(255,255,255,.55);z-index:5;pointer-events:none;transition:all .15s}
+  #cross.act{width:12px;height:12px;margin:-6px;background:transparent;border:2px solid #facc15}
+  #prompt{position:fixed;left:50%;top:56%;transform:translateX(-50%);z-index:5;font:600 16px system-ui,sans-serif;color:#fde68a;text-shadow:0 2px 6px #000;pointer-events:none;text-align:center;padding:0 10px}
+  #sub{position:fixed;left:50%;bottom:9%;transform:translateX(-50%);width:min(760px,92vw);z-index:6;text-align:center;pointer-events:none}
+  #sub p{margin:4px 0;padding:6px 12px;background:rgba(0,0,0,.62);border-radius:8px;line-height:1.4;font-size:17px;animation:fade .5s;text-shadow:0 1px 3px #000}
+  #sub p.chg{color:#c4b5fd;font-style:italic}
+  #sub p.ev{color:#b9b3cc;font-style:italic}
+  #sub p.scary{color:#fca5a5}
+  #sub p.got{color:var(--gold)}
+  @keyframes fade{from{opacity:0;transform:translateY(5px)}}
+  #pause,#modal,#end,#title{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:16px;overflow:auto;background:rgba(5,4,9,.88)}
+  #pause{background:rgba(5,4,9,.6);text-align:center;font-size:20px;cursor:pointer}
+  .hidden{display:none!important}
+  .box{max-width:540px;width:100%;background:#17141f;border:1px solid #3a3450;border-radius:14px;padding:22px;line-height:1.55}
+  .box h2{margin:0 0 10px}.box p{margin:8px 0}
+  #title .box,#end .box{max-width:620px}
+  #title .box{text-align:center}
+  #title h1{font-size:clamp(30px,7vw,52px);margin:4px 0 10px}
+  #end h1{text-align:center;margin:4px 0;font-size:clamp(26px,6vw,42px)}
+  #end .no{text-align:center;color:var(--dim);font:13px system-ui,sans-serif;letter-spacing:2px;text-transform:uppercase}
+  .paper{background:#e8dcc0;color:#3b2f20;padding:16px 18px;border-radius:4px;font-style:italic;box-shadow:0 6px 18px rgba(0,0,0,.5)}
+  mark{background:#facc15;color:#000;padding:0 4px;border-radius:3px;font-style:normal;font-weight:700}
+  .btn{display:inline-block;margin:8px 8px 0 0;padding:10px 20px;border-radius:999px;border:0;background:var(--gold);color:#111;font-weight:700;font-size:15px}
+  .btn.alt{background:#2a2638;color:#e7e3ef;border:1px solid #433c5c}
+  .digits{display:flex;gap:14px;justify-content:center;margin:14px 0}
+  .dg{display:flex;flex-direction:column;align-items:center;gap:4px}
+  .dg button{width:52px;height:34px;border-radius:8px;border:1px solid #433c5c;background:#2a2638}
+  .dg div{width:52px;height:60px;display:grid;place-items:center;font:700 34px ui-monospace,monospace;background:#000;border-radius:8px;border:1px solid #433c5c;color:var(--gold)}
+  .err{color:var(--red);min-height:1.4em;text-align:center}
+  .dim{color:var(--dim);font-size:14px}
+  .keys{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;text-align:left;font-size:14px;margin:12px auto;max-width:360px}
+  .keys b{font:700 12px ui-monospace,monospace;background:#2a2638;border:1px solid #433c5c;border-radius:5px;padding:1px 6px;justify-self:end}
+  a{color:#94a3b8;font:14px system-ui,sans-serif}
+  /* Touch */
+  #touch{position:fixed;inset:0;z-index:7;pointer-events:none;display:none}
+  body.touch #touch{display:block}
+  #stick{position:absolute;left:22px;bottom:58px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.2);pointer-events:none;opacity:.8}
+  #knob{position:absolute;left:36px;top:36px;width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.28)}
+  .tb{position:absolute;pointer-events:auto;width:64px;height:64px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(20,16,30,.65);font-size:24px;display:grid;place-items:center}
+  #tE{right:22px;bottom:84px;width:76px;height:76px;font:700 22px system-ui,sans-serif;background:rgba(250,204,21,.25);border-color:#facc15}
+  #tF{right:112px;bottom:50px}
+  #tR{right:22px;bottom:176px;font-size:20px}
+  #bars{bottom:14px}
+  body.touch #bars{left:auto;right:16px;bottom:16px}
+  body.touch #sub{bottom:auto;top:96px}
+  body.touch #sub p{font-size:15px}
+  body.touch #prompt{top:46%}
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="fear"></div><canvas id="grain"></canvas>
+<div id="hud">
+  <div id="inv"></div>
+  <div class="hr"><span id="nerv"></span><span id="clock">🕰 23:00</span><button id="mute" title="Ton (M)">🔊</button></div>
+</div>
+<div id="bars"><div class="lbl">🔦</div><div class="bar" id="bBatW"><i id="bBat"></i></div><div class="lbl">🏃</div><div class="bar st"><i id="bSta"></i></div></div>
+<div id="cross"></div><div id="prompt"></div><div id="sub"></div>
+<div id="touch"><div id="stick"><div id="knob"></div></div><button class="tb" id="tE">E</button><button class="tb" id="tF">🔦</button><button class="tb" id="tR">🏃</button></div>
+<div id="jump"></div>
+<div id="blk"></div>
+<div id="pause" class="hidden">Pausiert – klicke, um weiterzuspielen</div>
+<div id="modal" class="hidden"><div class="box" id="mbox"></div></div>
+<div id="end" class="hidden"><div class="box" id="ebox"></div></div>
+
+<div id="title">
+  <div class="box">
+    <h1>Das verlassene Haus <small style="font-size:.45em;color:#a5b4fc">3D</small></h1>
+    <p>Du wachst auf – allein, in einem Haus, das seit Jahren leer steht. Finde <b>5 Gegenstände</b>, um wieder hinauszukommen. Aber du bist nicht allein: <b>Etwas</b> geht durch die Flure.</p>
+    <div class="keys">
+      <b>W A S D</b><span>laufen</span>
+      <b>Maus</b><span>umsehen</span>
+      <b>Shift</b><span>rennen (Ausdauer!)</span>
+      <b>E / Klick</b><span>benutzen · verstecken</span>
+      <b>F</b><span>Taschenlampe (verbraucht Batterie)</span>
+      <b>M</b><span>Ton an/aus</span>
+    </div>
+    <p class="dim">Am Handy: Stick links zum Laufen, rechts wischen zum Umsehen, Knöpfe für E / Licht / Rennen.</p>
+    <p class="dim">🎧 Mit Kopfhörern am gruseligsten. Enthält Schreckmomente und flackernde Bilder. 8 verschiedene Enden.</p>
+    <p class="dim" id="found"></p>
+    <button class="btn" id="startBtn">Betreten</button><br>
+    <a href="haus.html">← 2D-Version</a>
+  </div>
+</div>
+
+<script src="lib/three.min.js"></script>
+<script>
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const TOTAL = 22 * 60;            // Sekunden bis 3:07 Uhr
+  const CODE = [3, 0, 7];
+  const DEBUG = /debug/.test(location.search);
+  const TOUCH = matchMedia('(pointer:coarse)').matches || 'ontouchstart' in window;
+  if (TOUCH) document.body.classList.add('touch');
+
+  const ITEMS = {
+    key:    { e: '🗝️', n: 'Rostiger Schlüssel', d: 'Ein alter Schlüssel an einem verblichenen blauen Band.' },
+    light:  { e: '🔦', n: 'Taschenlampe', d: 'Schwer, aus Metall. Mit F schaltest du sie ein und aus.' },
+    diary:  { e: '📖', n: 'Tagebuchseite' },
+    photo:  { e: '🖼️', n: 'Zerrissenes Foto' },
+    letter: { e: '✉️', n: 'Brief' }
+  };
+  const HINTS = ['diary', 'photo', 'letter'];
+  const READ = {
+    diary: `<p class="paper">3. Oktober.<br><br>Ich habe das Haus abgeschlossen und werde es nie wieder betreten. Seit jener Nacht um 3:07 Uhr, als Lena verschwand, ist hier nichts mehr, wie es war. Das Kind fragt nicht mehr nach ihr. Vielleicht ist das besser.<br><br>Etwas anderes ist seit jener Nacht im Haus. Ich habe es nie gesehen, nur gehört. Es kommt, wenn man zu lange an einem Ort bleibt.<br><br>Ich sichere die Haustür mit einem Zahlenschloss und verteile den Code auf drei Orte, damit ihn niemand allein findet. Der erste Teil, hier: die <mark>DREI</mark>.<br><br>– M.</p>`,
+    photo: `<p>Zwei Kinder auf einer Schaukel im Garten, mitten im Lachen. Das Foto ist in der Mitte zerrissen – neben dem lachenden Mädchen mit den Zöpfen ist ein leerer Platz. <i>Dein</i> Platz.</p><p class="paper">Auf der Rückseite, in Kinderschrift: „Lena &amp; ich – für immer.“<br>Darunter, in Mamas Schrift: „Zweiter Teil des Codes: <mark>NULL</mark>. Ein Kreis hat kein Ende.“</p>`,
+    letter: `<p class="paper">Liebes Geschwisterchen,<br><br>ich bin nicht weggelaufen. Wir haben Verstecken gespielt, und ich habe mich so gut versteckt, dass du mich nicht mehr gefunden hast. Dann bist du eingeschlafen und ich konnte nicht mehr zurück.<br><br>Das Haus hält mich fest, weil ich noch darauf warte, dass du <i>mich</i> rufst. Wenn du das hier liest: Geh nicht einfach. Ruf meinen Namen an der Tür, dann darf ich auch gehen.<br><br>Und wenn etwas durch die Flure geht – das bin nicht ich. Es ist, was das Haus aus meiner Angst gemacht hat. Es hasst Licht, und es findet dich nicht, wenn du dich versteckst. Aber es merkt sich jedes Versteck.<br><br>Der letzte Teil des Codes: <mark>SIEBEN</mark>. So alt war ich.<br><br>Deine Lena</p>`
+  };
+
+  // =====================================================================
+  // Ton
+  // =====================================================================
+  let AC = null, muted = false, master, droneG, lp, windG, noiseBuf, fearV = 0, beatTimer = null;
+  function audioInit() {
+    if (AC) return;
+    try {
+      AC = new (window.AudioContext || window.webkitAudioContext)();
+      master = AC.createGain(); master.gain.value = muted ? 0 : 1; master.connect(AC.destination);
+      lp = AC.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 140;
+      droneG = AC.createGain(); droneG.gain.value = .06;
+      [55, 55.8, 82.4].forEach((f, i) => { const o = AC.createOscillator(); o.type = i === 2 ? 'sine' : 'sawtooth'; o.frequency.value = f; o.connect(lp); o.start(); });
+      lp.connect(droneG); droneG.connect(master);
+      const lfo = AC.createOscillator(), lg = AC.createGain(); lfo.frequency.value = .12; lg.gain.value = .025; lfo.connect(lg); lg.connect(droneG.gain); lfo.start();
+      noiseBuf = AC.createBuffer(1, AC.sampleRate * 2, AC.sampleRate);
+      const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      const ns = AC.createBufferSource(); ns.buffer = noiseBuf; ns.loop = true;
+      const bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 500; bp.Q.value = .8;
+      windG = AC.createGain(); windG.gain.value = .025; ns.connect(bp); bp.connect(windG); windG.connect(master); ns.start();
+      const wl = AC.createOscillator(), wg = AC.createGain(); wl.frequency.value = .07; wg.gain.value = 250; wl.connect(wg); wg.connect(bp.frequency); wl.start();
+    } catch (e) { AC = null; }
+  }
+  function snd(f, d = .1, type = 'sine', v = .05, slide = 0, delay = 0) {
+    if (muted || !AC) return;
+    try {
+      const o = AC.createOscillator(), g = AC.createGain(), n = AC.currentTime + delay;
+      o.type = type; o.frequency.setValueAtTime(f, n);
+      if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(25, f + slide), n + d);
+      g.gain.setValueAtTime(v, n); g.gain.exponentialRampToValueAtTime(.0001, n + d);
+      o.connect(g); g.connect(master); o.start(n); o.stop(n + d);
+    } catch (e) {}
+  }
+  function noise(dur, freq, q, vol, delay = 0) {
+    if (muted || !AC) return;
+    try {
+      const s = AC.createBufferSource(); s.buffer = noiseBuf;
+      const f = AC.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q;
+      const g = AC.createGain(), n = AC.currentTime + delay;
+      g.gain.setValueAtTime(0, n); g.gain.linearRampToValueAtTime(vol, n + dur * .3); g.gain.exponentialRampToValueAtTime(.0001, n + dur);
+      s.connect(f); f.connect(g); g.connect(master); s.start(n, Math.random(), dur + .1);
+    } catch (e) {}
+  }
+  const sfx = {
+    step: v => snd(75, .13, 'sine', .05 * v, -30),
+    creak: () => snd(130, .8, 'sawtooth', .03, -60),
+    got: () => [523, 659, 784].forEach((f, i) => snd(f, .25, 'triangle', .05, 0, i * .1)),
+    ring: () => [0, .25, .5, .75].forEach(d => { snd(880, .12, 'square', .03, 0, d); snd(700, .12, 'square', .03, 0, d + .12); }),
+    scare: () => { noise(.9, 300, .5, .3); snd(190, 1, 'sawtooth', .13, -150); snd(60, 1.3, 'sine', .2, -20); },
+    click: () => snd(300, .05, 'square', .03),
+    knock: () => [0, .35, .7].forEach(d => { snd(110, .1, 'square', .12, -40, d); noise(.1, 300, 1, .2, d); }),
+    whisper: () => { noise(.5, 1800, 5, .06); noise(.4, 2600, 7, .05, .35); noise(.6, 1500, 4, .05, .7); },
+    caught: () => { noise(1.2, 200, .4, .35); snd(45, 1.6, 'sawtooth', .2, -15); },
+    gstep: v => snd(60, .2, 'sine', .22 * v, -22),
+    music: () => [523, 587, 659, 523, 659, 587, 523].forEach((f, i) => snd(f, .3, 'triangle', .03, 0, i * .35))
+  };
+  function beatLoop() {
+    clearTimeout(beatTimer);
+    if (!S || S.over) return;
+    if (fearV > .25 && !isPaused()) { const v = .06 + fearV * .2; snd(58, .14, 'sine', v, -25); snd(48, .12, 'sine', v * .8, -20, .17); }
+    beatTimer = setTimeout(beatLoop, 1300 - fearV * 850);
+  }
+  $('mute').onclick = e => { e.stopPropagation(); toggleMute(); };
+  function toggleMute() { muted = !muted; $('mute').textContent = muted ? '🔇' : '🔊'; if (master) master.gain.value = muted ? 0 : 1; }
+
+  // =====================================================================
+  // Three.js: Grundlagen
+  // =====================================================================
+  const cv = $('gl');
+  const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x020106);
+  scene.fog = new THREE.FogExp2(0x020106, .1);
+  const camera = new THREE.PerspectiveCamera(74, 1, .05, 70);
+  camera.rotation.order = 'YXZ';
+  scene.add(camera);
+  function resize() { renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); }
+  addEventListener('resize', resize); resize();
+
+  const amb = new THREE.AmbientLight(0x3a3a66, .9); scene.add(amb);
+  const torch = new THREE.SpotLight(0xfff1d0, 2.2, 22, .42, .5, 1.2);
+  torch.position.set(.12, -.1, 0); torch.target.position.set(0, 0, -4);
+  camera.add(torch); camera.add(torch.target); torch.visible = false;
+
+  // ---- Texturen ----
+  function ctex(w, h, draw, rx = 1, ry = 1) {
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    draw(c.getContext('2d'), w, h);
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); return t;
+  }
+  const stains = (g, w, h, n, col) => { for (let i = 0; i < n; i++) { g.fillStyle = `rgba(${col},${rnd(.03, .13)})`; g.beginPath(); g.arc(rnd(0, w), rnd(0, h), rnd(5, 44), 0, 6.3); g.fill(); } };
+  const TX = {
+    wall: ctex(256, 256, (g, w, h) => {
+      g.fillStyle = '#7a6670'; g.fillRect(0, 0, w, h);
+      for (let x = 0; x < w; x += 32) { g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(x, 0, 12, h); g.fillStyle = 'rgba(255,255,255,.05)'; g.fillRect(x + 16, 0, 4, h); }
+      stains(g, w, h, 70, '15,8,8');
+      g.fillStyle = 'rgba(30,20,20,.5)'; g.fillRect(0, h - 10, w, 10);
+    }),
+    floor: ctex(256, 256, (g, w, h) => {
+      for (let y = 0; y < h; y += 32) { g.fillStyle = `rgb(${95 + rnd(-14, 14)},${68 + rnd(-10, 10)},${46 + rnd(-8, 8)})`; g.fillRect(0, y, w, 31); g.fillStyle = 'rgba(0,0,0,.5)'; g.fillRect(0, y + 31, w, 1);
+        for (let k = 0; k < 4; k++) g.fillRect(rnd(0, w), y, 1, 32); }
+      stains(g, w, h, 30, '0,0,0');
+    }),
+    stone: ctex(256, 256, (g, w, h) => {
+      g.fillStyle = '#6a6a70'; g.fillRect(0, 0, w, h);
+      for (let y = 0; y < h; y += 32) for (let x = (y / 32) % 2 ? 0 : -32; x < w; x += 64) { g.fillStyle = `rgb(${95 + rnd(-18, 18)},${95 + rnd(-18, 18)},${102 + rnd(-18, 18)})`; g.fillRect(x + 2, y + 2, 60, 28); }
+      stains(g, w, h, 60, '0,10,0');
+    }),
+    wood: ctex(128, 128, (g, w, h) => {
+      g.fillStyle = '#6a4630'; g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(0,0,0,${rnd(.05, .2)})`; g.fillRect(0, rnd(0, h), w, rnd(1, 3)); }
+    }),
+    ceil: ctex(128, 128, (g, w, h) => { g.fillStyle = '#6a6a6a'; g.fillRect(0, 0, w, h); stains(g, w, h, 25, '20,15,5'); }, 6, 6)
+  };
+  const Lm = (c, o = {}) => new THREE.MeshLambertMaterial({ color: c, ...o });
+  const M = {
+    floor: new THREE.MeshLambertMaterial({ map: TX.floor }),
+    stone: new THREE.MeshLambertMaterial({ map: TX.stone }),
+    ceil: new THREE.MeshLambertMaterial({ map: TX.ceil }),
+    wood: new THREE.MeshLambertMaterial({ map: TX.wood }),
+    dwood: Lm(0x3b2616), white: Lm(0xc9c5bd), cloth: Lm(0xb7b3aa), red: Lm(0x6a2328), blue: Lm(0x2d4a6a),
+    metal: Lm(0x55585e), black: Lm(0x08080a), door: Lm(0x5a3a26), dark: Lm(0x020203), glass: Lm(0x1a2230),
+    fire: Lm(0x3a3a3a), green: Lm(0x3f5a3a), yellow: Lm(0xb59a3a), plate: Lm(0xd9d6cc)
+  };
+  M.floor.map.repeat.set(24, 24);
+  { const t = TX.floor.clone(); t.needsUpdate = true; t.repeat.set(8, 8); M.floorS = new THREE.MeshLambertMaterial({ map: t }); }
+  const wallMats = new Map(); let wallKind = 'wall';
+  function wm(len, h = 3) {
+    const k = wallKind + Math.round(len * 2) + '_' + Math.round(h * 2);
+    if (!wallMats.has(k)) { const t = TX[wallKind].clone(); t.needsUpdate = true; t.repeat.set(Math.max(.5, len / 2), h / 2); wallMats.set(k, new THREE.MeshLambertMaterial({ map: t })); }
+    return wallMats.get(k);
+  }
+
+  // ---- Geometrie-Helfer ----
+  const walls = [], rayT = [], anims = [];
+  function box(w, h, d, m, x, y, z, par = scene) { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y + h / 2, z); par.add(o); return o; }
+  function cyl(rt, rb, h, m, x, y, z, par = scene, seg = 14) { const o = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), m); o.position.set(x, y + h / 2, z); par.add(o); return o; }
+  function sph(r, m, x, y, z, par = scene, sx = 1, sy = 1, sz = 1) { const o = new THREE.Mesh(new THREE.SphereGeometry(r, 14, 10), m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); par.add(o); return o; }
+  function plane(w, h, m, x, y, z, ry = 0, par = scene) { const o = new THREE.Mesh(new THREE.PlaneGeometry(w, h), m); o.position.set(x, y, z); o.rotation.y = ry; par.add(o); return o; }
+  function grp(x, y, z, ry = 0) { const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry; scene.add(g); return g; }
+  const col = (cx, cz, w, d) => { const c = { x1: cx - w / 2, x2: cx + w / 2, z1: cz - d / 2, z2: cz + d / 2, on: true }; walls.push(c); return c; };
+
+  function wallH(z, x1, x2, gaps = [], h = 3) {
+    let cur = x1; const segs = [];
+    gaps.slice().sort((a, b) => a[0] - b[0]).forEach(([c, w]) => { const a = c - w / 2, b = c + w / 2; if (a > cur) segs.push([cur, a]); cur = b; box(w, h - 2.3, .2, wm(w, h - 2.3), c, 2.3, z); });
+    if (x2 > cur) segs.push([cur, x2]);
+    segs.forEach(([a, b]) => { const m = box(b - a, h, .2, wm(b - a, h), (a + b) / 2, 0, z); rayT.push(m); walls.push({ x1: a, x2: b, z1: z - .1, z2: z + .1, on: true }); });
+  }
+  function wallV(x, z1, z2, gaps = [], h = 3) {
+    let cur = z1; const segs = [];
+    gaps.slice().sort((a, b) => a[0] - b[0]).forEach(([c, w]) => { const a = c - w / 2, b = c + w / 2; if (a > cur) segs.push([cur, a]); cur = b; box(.2, h - 2.3, w, wm(w, h - 2.3), x, 2.3, c); });
+    if (z2 > cur) segs.push([cur, z2]);
+    segs.forEach(([a, b]) => { const m = box(.2, h, b - a, wm(b - a, h), x, 0, (a + b) / 2); rayT.push(m); walls.push({ x1: x - .1, x2: x + .1, z1: a, z2: b, on: true }); });
+  }
+  function floorCeil(cx, cz, w, d, fm, h = 3) {
+    const f = plane(w, d, fm, cx, 0, cz); f.rotation.x = -Math.PI / 2;
+    const c = plane(w, d, M.ceil, cx, h, cz); c.rotation.x = Math.PI / 2;
+  }
+  function door(x, z, w, vertical, dir = 1) {
+    const pivot = new THREE.Group(); pivot.position.set(vertical ? x : x - w / 2, 0, vertical ? z - w / 2 : z); scene.add(pivot);
+    const d = box(vertical ? .08 : w, 2.3, vertical ? w : .08, M.door, vertical ? 0 : w / 2, 0, vertical ? w / 2 : 0, pivot);
+    cyl(.035, .035, .1, M.metal, vertical ? .07 : w - .15, 1.1, vertical ? w - .15 : .07, pivot).rotation.x = Math.PI / 2;
+    const c = vertical ? { x1: x - .1, x2: x + .1, z1: z - w / 2, z2: z + w / 2, on: true } : { x1: x - w / 2, x2: x + w / 2, z1: z - .1, z2: z + .1, on: true };
+    walls.push(c); rayT.push(d);
+    return { pivot, col: c, mesh: d, open: false, dir };
+  }
+  function openDoor(dr) {
+    if (dr.open) return; dr.open = true; dr.col.on = false; sfx.creak();
+    let t = 0; anims.push(dt => { t += dt / .7; dr.pivot.rotation.y = dr.dir * Math.min(1, t) * Math.PI / 2 * .95; return t >= 1; });
+  }
+
+  // ---- Interaktion ----
+  const IA = [];
+  function ia(root, label, run, o = {}) {
+    const e = { root, label, run, ...o }; IA.push(e);
+    const reg = m => { if (m.isMesh) { m.userData.ia = e; rayT.push(m); } };
+    if (root.isMesh) reg(root); else root.traverse(reg);
+    return e;
+  }
+
+  // =====================================================================
+  // Zustand
+  // =====================================================================
+  let S = null, playing = false, lockOK = false, noLock = false, tabHidden = false;
+  const has = k => !!S.inv[k];
+  const hints = () => HINTS.filter(has).length;
+  const P = { x: -6, z: -4, yaw: 0, pitch: 0, bob: 0, stamina: 1, fs: 0 };
+  const keys = {};
+  let touchMove = { x: 0, y: 0 }, touchRun = false;
+
+  const AREAS = {
+    ground: { amb: .9, fog: .1, spawn: { x: -5, z: -3.6, yaw: 0 } },
+    keller: { amb: .035, fog: .12, spawn: { x: 100, z: 4.3, yaw: 0 } },
+    kinder: { amb: .05, fog: .12, spawn: { x: 200, z: 2.0, yaw: 0 } },
+    dach: { amb: .12, fog: .11, spawn: { x: 297, z: 1.4, yaw: 0 } }
+  };
+  const areaOf = x => x < 50 ? 'ground' : x < 150 ? 'keller' : x < 250 ? 'kinder' : 'dach';
+  const areaLights = { ground: [], keller: [], kinder: [], dach: [] };
+  function lamp(area, x, y, z, color, inten, dist = 9) {
+    const l = new THREE.PointLight(color, inten, dist, 1.6); l.position.set(x, y, z); l.userData.base = inten; scene.add(l); areaLights[area].push(l); return l;
+  }
+  function roomOf(x, z) {
+    const a = areaOf(x); if (a !== 'ground') return a;
+    if (z < -1.5) { if (x < -3) return 'schlaf'; if (x < 5) return 'wohn'; return 'bad'; }
+    if (z > 1.5 && x < -1) return 'kueche';
+    return 'flur';
+  }
+  function isPaused() {
+    return !S || !playing || S.over || !$('modal').classList.contains('hidden') || tabHidden || (!TOUCH && !noLock && !lockOK);
+  }
+
+  // =====================================================================
+  // Gebäude: Erdgeschoss
+  // =====================================================================
+  const solidsDone = [];
+  floorCeil(0, 0, 18, 16, M.floor);
+  // Wände
+  wallH(-1.5, -9, 9, [[-6, 1.3], [0, 1.3], [7, 1.3]]);
+  wallH(1.5, -9, 9, [[-5, 1.3], [2.5, 1.3], [6.5, 3]]);
+  wallH(-8, -9, 5);
+  wallH(-5, 5, 9);
+  wallH(8, -9, -1, [[-5, 1.3]]);
+  wallH(6, 1, 4);
+  wallH(5, 5, 8);
+  wallV(-9, -8, 8);
+  wallV(-3, -8, -1.5);
+  wallV(5, -8, -1.5);
+  wallV(9, -5, 1.5, [[0, 1.5]]);
+  wallV(8, 1.5, 5);
+  wallV(-1, 1.5, 8);
+  wallV(1, 1.5, 6);
+  wallV(4, 1.5, 6);
+  wallV(5, 1.5, 5);
+
+  const doors = {
+    keller: door(2.5, 1.5, 1.3, false, 1),
+    haus: door(9, 0, 1.5, true, -1),
+    hinter: door(-5, 8, 1.3, false, -1)
+  };
+
+  // Lichter
+  lamp('ground', -6, 2.6, -5, 0x7a88c8, .9, 9);
+  lamp('ground', 1, 2.6, -5, 0xffa860, .8, 10);
+  lamp('ground', 7, 2.6, -3.2, 0x8aa0c8, .7, 7);
+  lamp('ground', -5, 2.6, 5, 0xffb070, .7, 9);
+  lamp('ground', -4, 2.7, 0, 0xffb878, .55, 9);
+  lamp('ground', 5, 2.7, 0, 0x9ab0e0, .5, 9);
+
+  // Fenster-Texturen (veränderbar)
+  function makeWindowTex(fig) {
+    const c = document.createElement('canvas'); c.width = 128; c.height = 160; const g = c.getContext('2d');
+    const draw = f => {
+      const gr = g.createLinearGradient(0, 0, 0, 160); gr.addColorStop(0, '#26304a'); gr.addColorStop(1, '#4a5878'); g.fillStyle = gr; g.fillRect(0, 0, 128, 160);
+      stains(g, 128, 160, 25, '200,210,230');
+      if (f) { g.fillStyle = '#000'; g.beginPath(); g.ellipse(64, 52, 12, 17, 0, 0, 6.3); g.fill(); g.fillRect(58, 66, 12, 70); g.fillStyle = '#fff'; g.fillRect(58, 48, 4, 8); g.fillRect(67, 48, 4, 8); }
+      g.strokeStyle = '#1a1210'; g.lineWidth = 6; g.strokeRect(3, 3, 122, 154); g.beginPath(); g.moveTo(64, 0); g.lineTo(64, 160); g.moveTo(0, 80); g.lineTo(128, 80); g.stroke();
+    };
+    draw(fig); const t = new THREE.CanvasTexture(c); t.userData = { draw, g }; return t;
+  }
+  function addWindow(x, y, z, ry, fig) {
+    const tex = makeWindowTex(fig);
+    const w = plane(1.3, 1.6, new THREE.MeshBasicMaterial({ map: tex, fog: false, color: 0xaab4d0 }), x, y, z, ry);
+    return { mesh: w, tex, redraw(f) { tex.userData.draw(f); tex.needsUpdate = true; } };
+  }
+
+  // ---- Schlafzimmer ----
+  const SZ = {};
+  {
+    const g = grp(-7, 0, -5.3);
+    box(1.7, .45, 2.2, M.dwood, 0, 0, 0, g); box(1.6, .22, 2.1, M.cloth, 0, .45, 0, g); box(.55, .12, .35, M.white, -.4, .67, -.8, g); box(1.7, 1.1, .12, M.dwood, 0, 0, -1.1, g);
+    SZ.bed = g; col(-7, -5.3, 1.7, 2.2);
+    SZ.teddy = box(.2, .22, .16, Lm(0x8a5a30), .3, .67, -.7, g); SZ.teddy.visible = false;
+    SZ.hollow2 = box(.55, .06, .8, Lm(0x8a867e), .55, .68, .2, g); SZ.hollow2.visible = false;
+    ia(g, 'Bett', () => say('In der Matratze ist eine Kuhle – deine. Das Kissen riecht nach Staub und etwas Vertrautem, das du nicht benennen kannst.'));
+    const gap = box(.1, .32, 1.4, M.dark, -6.12, 0, -5.3); ia(gap, 'Verstecken – unters Bett', () => hideIn(HIDE.schlaf));
+    const k = grp(-3.5, 0, -6.6); box(.5, .9, 1.2, M.wood, 0, 0, 0, k); box(.52, .06, 1.25, M.dwood, 0, .9, 0, k); col(-3.5, -6.6, .5, 1.2);
+    ia(k, 'Kommode', () => { if (!S.flags.zettel) { S.flags.zettel = 1; say('In der obersten Schublade liegt ein Zettel in Kinderschrift: <i>„Such zuerst, wo es einmal warm war.“</i> Der Rest ist abgerissen.'); } else say('Außer dem Zettel ist die Kommode leer.'); });
+    SZ.win = addWindow(-6, 1.7, -7.88, 0, false);
+    ia(SZ.win.mesh, 'Fenster', () => say(S.ver.schlaf >= 1 ? 'Im Nebel steht eine kleine Gestalt neben dem Schaukelgerüst. Sie dreht den Kopf zu dir – du weichst zurück. Als du wieder hinsiehst, schwingt nur die leere Schaukel.' : 'Die Gitterstäbe sind kalt und fest verschraubt. Draußen: Nebel, ein verwilderter Garten und ein altes Schaukelgerüst.'));
+    for (let i = -1; i <= 1; i++) box(.05, 1.6, .05, M.black, -6 + i * .4, .9, -7.84);
+  }
+
+  // ---- Wohnzimmer ----
+  const WZ = {};
+  {
+    const k = grp(1.5, 0, -7.6); box(2.2, 1.3, .7, M.stone, 0, 0, 0, k); box(1.1, .8, .5, M.dark, 0, 0, .15, k); box(2.4, .1, .8, M.dwood, 0, 1.3, 0, k);
+    WZ.ember = box(.5, .12, .25, Lm(0x2a1a14), 0, 0, .15, k);
+    col(1.5, -7.6, 2.2, .7);
+    ia(k, 'Kamin', () => { if (!has('key')) { say('Der Kamin ist kalt. Du greifst in die Asche – und deine Finger berühren etwas Hartes: ein Schlüssel!'); give('key'); } else say('Nur kalte Asche.'); });
+    // Gemälde
+    const pc = document.createElement('canvas'); pc.width = 160; pc.height = 112; const pg = pc.getContext('2d');
+    WZ.drawP = v => {
+      pg.fillStyle = '#4a3a28'; pg.fillRect(0, 0, 160, 112); stains(pg, 160, 112, 30, '0,0,0');
+      const fig = (x, h, c) => { pg.fillStyle = c; pg.fillRect(x - 9, 112 - h, 18, h - 16); pg.fillStyle = '#d8b898'; pg.beginPath(); pg.arc(x, 112 - h - 8, 10, 0, 6.3); pg.fill(); };
+      fig(38, 70, '#2a2a3a'); fig(66, 66, '#5a2a30'); fig(96, 48, '#3a4a3a');
+      if (v === 0) { fig(126, 38, '#d8d0c0'); pg.fillStyle = '#000'; pg.fillRect(122, 112 - 46, 3, 3); pg.fillRect(129, 112 - 46, 3, 3); }
+      else if (v === 1) { fig(126, 38, '#d8d0c0'); pg.strokeStyle = '#a01010'; pg.lineWidth = 2; for (let i = 0; i < 8; i++) { pg.beginPath(); pg.moveTo(116 + rnd(0, 20), 112 - 56 + rnd(0, 6)); pg.lineTo(116 + rnd(0, 20), 112 - 40 + rnd(0, 6)); pg.stroke(); } }
+      else { pg.fillStyle = '#6a5a44'; pg.fillRect(112, 40, 28, 72); pg.fillStyle = '#000'; pg.fillRect(94, 112 - 56, 4, 4); pg.fillRect(100, 112 - 56, 4, 4); }
+      pg.strokeStyle = '#8a6a30'; pg.lineWidth = 6; pg.strokeRect(3, 3, 154, 106);
+    };
+    WZ.drawP(0); WZ.ptex = new THREE.CanvasTexture(pc);
+    WZ.paint = plane(1.5, 1.05, new THREE.MeshLambertMaterial({ map: WZ.ptex }), 1.5, 2.1, -7.86);
+    ia(WZ.paint, 'Gemälde', () => say(S.ver.wohn === 0 ? 'Ein Familienporträt: ein Mann, eine Frau, ein Kind mit ernstem Blick – und ein kleines Mädchen mit Zöpfen, das lacht.' : S.ver.wohn === 1 ? 'Das Gesicht des kleinen Mädchens ist weggekratzt. Die Farbe darunter ist noch feucht.' : 'Das Mädchen ist ganz verschwunden, nur ein heller Fleck bleibt. Und das Kind in der Mitte sieht jetzt direkt in deine Richtung.'));
+    // Standuhr
+    const u = grp(4.5, 0, -7.5); box(.55, 2.2, .4, M.dwood, 0, 0, 0, u); const face = cyl(.2, .2, .04, M.white, 0, 1.6, .21, u); face.rotation.x = Math.PI / 2; box(.03, .22, .02, M.black, 0, 1.6, .24, u).rotation.z = .6; box(.02, .15, .02, M.black, .04, 1.58, .24, u).rotation.z = -2.1;
+    box(.3, .9, .02, M.glass, 0, .3, .21, u); col(4.5, -7.5, .55, .4);
+    ia(u, 'Standuhr', () => { S.flags.clock = 1; say('Die Standuhr ist um <b>3:07 Uhr</b> stehen geblieben. Der Pendel hängt reglos. Du hast das Gefühl, dass diese Uhrzeit wichtig ist.'); });
+    // Regal
+    const r = grp(4.75, 0, -4.2); box(.4, 2.1, 2, M.dwood, 0, 0, 0, r); for (let i = 0; i < 4; i++) for (let j = 0; j < 9; j++) box(.2, .26, .1, Lm(pick([0x6a2a2a, 0x2a4a6a, 0x3a5a3a, 0x7a6a3a, 0x4a3a5a])), -.05, .2 + i * .48, -.9 + j * .22, r);
+    col(4.75, -4.2, .4, 2);
+    ia(r, 'Bücherregal', () => say('Märchenbücher, Kochbücher, ein Lexikon. Auf einem Buch steht in Kinderschrift: <i>„Hänsel und Gretel – für Lena“</i>.'));
+    // Sofa
+    const s = grp(.2, 0, -4.2); box(2.3, .45, .95, M.cloth, 0, 0, 0, s); box(2.3, .55, .25, M.cloth, 0, .45, -.4, s); box(.25, .65, .95, M.cloth, -1.1, 0, 0, s); box(.25, .65, .95, M.cloth, 1.1, 0, 0, s);
+    col(.2, -4.2, 2.3, .95);
+    ia(s, 'Sofa', () => { if (!S.flags.batt2) { S.flags.batt2 = 1; S.battery = Math.min(1, S.battery + .5); sfx.got(); say('Unter dem Laken: Staub, Mäusekot – und eine Batterie! <b>🔋 Du steckst sie ein.</b>', 'got'); hud(); } else say('Staub, Mäusekot, eine eingerollte Decke. Nichts mehr.'); });
+    const gp = box(.1, .5, 1, M.dark, -1.05, 0, -4.2); ia(gp, 'Verstecken – hinters Sofa', () => hideIn(HIDE.wohn));
+    WZ.win = addWindow(-1.4, 1.7, -7.88, 0, false);
+    ia(WZ.win.mesh, 'Fenster', () => say(S.ver.wohn >= 2 ? 'Du erstarrst: Am Fenster stand jemand. Jetzt ist da nur noch Nebel.' : 'Zerrissene Vorhänge, Nebel dahinter.'));
+  }
+
+  // ---- Flur ----
+  const FL = {};
+  {
+    const t = grp(-8.4, 0, -.9); box(.6, .75, .6, M.wood, 0, 0, 0, t); FL.phone = box(.28, .14, .22, M.black, 0, .75, 0, t); box(.3, .06, .08, M.black, 0, .88, 0, t); col(-8.4, -.9, .6, .6);
+    FL.phoneRing = false;
+    ia(t, 'Telefon', () => {
+      if (S.T < 540) say('Ein altes Wählscheibentelefon. Die Leitung ist tot – kein Ton.');
+      else if (!S.flags.phone) { S.flags.phone = 1; FL.phoneRing = false; say('Du hebst ab. Rauschen, dann eine Kinderstimme, ganz leise: <i>„… hörst du mich? Such weiter oben … ich warte … unterm Dach …“</i> Klick. Die Leitung ist wieder tot.', 'scary'); sfx.scare(); }
+      else say('Nur noch Rauschen.');
+    });
+    const c = grp(-2.2, 0, 1.25); box(1.6, .06, .08, M.dwood, 0, 1.8, .1, c); for (let i = 0; i < 4; i++) box(.3, 1.2, .2, Lm(pick([0x2a2a35, 0x4a3a2a, 0x2a3a35])), -.6 + i * .4, .5, 0, c);
+    ia(c, 'Garderobe', () => say('Mäntel, die nach Mottenkugeln riechen. In einer Tasche steckt ein vergilbtes Bonbon. Du lässt es lieber liegen.'));
+    const gp = box(.4, 1.5, .06, M.dark, -.9, 0, 1.38); ia(gp, 'Verstecken – in die Garderobe', () => hideIn(HIDE.flur));
+    // Haustür
+    ia(doors.haus.mesh, 'Haustür – Zahlenschloss', () => openLock());
+    const pad = box(.05, .25, .18, M.metal, 8.88, 1.2, -1.0); box(.02, .15, .1, Lm(0x224422), 8.85, 1.25, -1.0);
+    ia(pad, 'Haustür – Zahlenschloss', () => openLock());
+    // Kellertür
+    ia(doors.keller.mesh, 'Kellertür', () => {
+      if (doors.keller.open) return say('Die Kellertür steht offen. Von unten kriecht Kälte herauf.');
+      if (!has('key')) return say('Die Kellertür ist verschlossen. Das Schloss ist alt und rostig – hier passt nur ein ganz bestimmter Schlüssel.');
+      say('Der rostige Schlüssel dreht sich knirschend im Schloss. Kalte, feuchte Luft strömt dir entgegen.'); openDoor(doors.keller);
+    });
+    // Treppe nach oben
+    const st = grp(6.5, 0, 3.7); for (let i = 0; i < 7; i++) box(2.6, .22 * (i + 1), .35, M.wood, 0, 0, i * .35 - 1.2, st); col(6.5, 3.6, 3, 2.6);
+    ia(st, 'Treppe nach oben', () => { if (!has('light')) return say('Die Treppe nach oben liegt in völliger Dunkelheit. Ohne Licht würdest du schon auf der ersten Stufe stolpern.'); goArea('kinder'); });
+    // Kellerraum: Abstieg
+    const hole = plane(2.2, 2.2, M.dark, 2.5, .03, 4.7); hole.rotation.x = -Math.PI / 2;
+    for (let i = 0; i < 5; i++) box(2.2, .02, .08, Lm(0x4a3a2a), 2.5, .03, 3.7 + i * .3);
+    col(2.5, 4.55, 2.4, 2.6);
+    ia(hole, 'Treppe hinab in den Keller', () => goArea('keller'));
+    // Teppich
+    plane(1.2, 5, Lm(0x4a1a22), -3, .015, 0).rotation.x = -Math.PI / 2;
+  }
+
+  // ---- Küche ----
+  const KU = {};
+  {
+    const t = grp(-5.2, 0, 5.2); box(1.5, .06, 1, M.wood, 0, .72, 0, t); for (const [x, z] of [[-.65, -.4], [.65, -.4], [-.65, .4], [.65, .4]]) box(.07, .72, .07, M.dwood, x, 0, z, t);
+    col(-5.2, 5.2, 1.5, 1);
+    KU.table = t;
+    KU.plates = new THREE.Group(); t.add(KU.plates); [-.45, 0, .45].forEach(x => cyl(.14, .14, .02, M.plate, x, .78, 0, KU.plates)); cyl(.1, .13, .1, M.red, 0, .8, 0, KU.plates); KU.plates.visible = false;
+    KU.chairs = [-1.1, 1.1, 0].map((x, i) => { const c = new THREE.Group(); c.position.set(-5.2 + x, 0, i === 2 ? 6.1 : 5.2); scene.add(c); box(.42, .05, .42, M.wood, 0, .45, 0, c); box(.42, .5, .05, M.wood, 0, .5, -.2, c); for (const [a, b] of [[-.18, -.18], [.18, -.18], [-.18, .18], [.18, .18]]) box(.04, .45, .04, M.dwood, a, 0, b, c); c.userData.rot = [.2, -.3, .1][i]; c.rotation.y = i === 2 ? Math.PI : i === 0 ? Math.PI / 2 : -Math.PI / 2; return c; });
+    ia(t, 'Tisch', () => say(S.ver.kueche === 0 ? 'Ein Tisch mit drei Stühlen, alle verstaubt. Zwei stehen eng beieinander, einer ist abgerückt.' : S.ver.kueche === 1 ? 'Der Tisch ist gedeckt – drei Teller, sauber, staubfrei. Einer davon ist noch warm.' : 'Die drei Teller sind verschwunden, nur Kreidestriche auf der Tischplatte: sieben kleine Striche.'));
+    const gp = plane(1.3, .9, M.dark, -5.2, .02, 5.2); gp.rotation.x = -Math.PI / 2; ia(gp, 'Verstecken – unter den Tisch', () => hideIn(HIDE.kueche));
+    const s = grp(-8.6, 0, 4); box(.55, .9, 1.8, M.wood, 0, 0, 0, s); box(.6, .05, 1.85, M.dwood, 0, .9, 0, s); box(.5, .9, 1.8, M.wood, 0, 1.4, 0, s); col(-8.6, 4, .6, 1.8);
+    ia(s, 'Küchenschrank', () => { if (!S.flags.keks) { S.flags.keks = 1; say('Teller, Tassen, eine Keksdose. In der Dose liegt ein Zettel: <i>„Der Keller gefällt Mama nicht. Aber dort ist alles, was wir versteckt haben.“</i>'); } else say('Nur Geschirr. Die Keksdose ist leer.'); });
+    const k = grp(-8.5, 0, 6.8); box(.7, 1.8, .7, M.white, 0, 0, 0, k); box(.02, .5, .04, M.metal, .36, 1.1, -.2, k); col(-8.5, 6.8, .7, .7);
+    ia(k, 'Kühlschrank', () => say('Der Gestank lässt dich zurückweichen. Hinter einer Milchflasche aus einem anderen Jahrzehnt – nichts. Schnell zu.'));
+    const sk = grp(-2, 0, 7.5); box(1.4, .9, .6, M.wood, 0, 0, 0, sk); box(1.2, .08, .5, M.white, 0, .9, 0, sk); const tap = cyl(.02, .02, .25, M.metal, 0, .98, -.15, sk); col(-2, 7.5, 1.4, .6);
+    ia(sk, 'Wasserhahn', () => say(S.ver.kueche >= 2 ? 'Der Wasserhahn tropft nicht mehr. Die Stille drückt in deinen Ohren.' : 'Drip … drip … Das Wasser hat eine Rostspur in das Becken gegraben. Wer dreht das Wasser noch an?'));
+    KU.tap = sk;
+    const sch = grp(-8.6, 0, 2.5); box(.5, .8, .9, M.wood, 0, 0, 0, sch); box(.04, .12, .5, M.metal, .27, .6, 0, sch); col(-8.6, 2.5, .5, .9);
+    ia(sch, 'Schublade', () => { if (!S.flags.batt) { S.flags.batt = 1; S.battery = Math.min(1, S.battery + .5); sfx.got(); say('Zwischen Besteck, Korkenziehern und Gummibändern liegt eine Batterie. <b>🔋 Du steckst sie ein.</b>', 'got'); hud(); } else say('Nur noch Besteck, das nach Rost riecht.'); });
+    ia(doors.hinter.mesh, 'Hintertür', () => backDoor());
+  }
+
+  // ---- Bad ----
+  const BA = {};
+  {
+    const w = grp(8.3, 0, -3.4); box(.8, .55, 1.9, M.white, 0, 0, 0, w); box(.6, .1, 1.7, M.glass, 0, .5, 0, w); col(8.3, -3.4, .8, 1.9);
+    ia(w, 'Wanne', () => say('Das Wasser in der Wanne ist eiskalt und klar – obwohl der Hahn trocken ist und das Haus seit Jahren leer steht. Du berührst es nicht.'));
+    const b = grp(6.2, 0, -4.7); box(.7, .85, .45, M.white, 0, 0, 0, b); col(6.2, -4.7, .7, .45);
+    // Spiegel
+    const mc = document.createElement('canvas'); mc.width = 128; mc.height = 160; const mg = mc.getContext('2d');
+    BA.draw = v => { const gr = mg.createLinearGradient(0, 0, 128, 160); gr.addColorStop(0, '#202a34'); gr.addColorStop(1, '#0c1016'); mg.fillStyle = gr; mg.fillRect(0, 0, 128, 160); stains(mg, 128, 160, 20, '180,190,200');
+      if (v > 0) { mg.fillStyle = 'rgba(180,30,30,.9)'; mg.font = 'bold 20px cursive'; mg.textAlign = 'center'; mg.fillText(v === 1 ? 'HINTER' : 'KOMM', 64, 70); mg.fillText(v === 1 ? 'DIR' : 'HOCH', 64, 100); }
+      mg.strokeStyle = '#3a2a1a'; mg.lineWidth = 8; mg.strokeRect(4, 4, 120, 152); };
+    BA.draw(0); BA.tex = new THREE.CanvasTexture(mc);
+    BA.mirror = plane(.9, 1.1, new THREE.MeshBasicMaterial({ map: BA.tex, color: 0x99a0aa, fog: true }), 6.2, 1.7, -4.88);
+    ia(BA.mirror, 'Spiegel', () => say(S.ver.bad === 0 ? 'Dein Gesicht im staubigen Spiegel: blass, müde. Du wischst mit dem Ärmel – dahinter bist nur du. Noch.' : S.ver.bad === 1 ? 'In Kinderschrift steht auf dem beschlagenen Glas: <i>HINTER DIR</i>. Du drehst dich um. Nichts. Als du zurückblickst, ist die Schrift verwischt.' : 'Auf dem Glas steht: <i>KOMM HOCH</i>. Darunter malt jemand mit dem Finger einen kleinen Kreis.'));
+    const m = box(.35, .5, .15, M.white, 7.6, 1.3, -4.88); ia(m, 'Medizinschrank', () => say('Verstaubte Pillendosen, ein Päckchen Kinderpflaster mit Tiermotiven. Nichts, was dir hier raushilft.'));
+    const v = box(.05, 1.9, 1, Lm(0x7a8a7a, { transparent: true, opacity: .75 }), 7.6, 0, -2.2); ia(v, 'Verstecken – hinter den Duschvorhang', () => hideIn(HIDE.bad));
+  }
+
+  // =====================================================================
+  // Keller (x ≈ 100)
+  // =====================================================================
+  const KE = {};
+  {
+    const ox = 100;
+    const f = plane(10, 12, M.stone, ox, 0, 0); f.rotation.x = -Math.PI / 2; const c = plane(10, 12, M.ceil, ox, 2.8, 0); c.rotation.x = Math.PI / 2;
+    wallKind = 'stone';
+    wallH(-6, ox - 5, ox + 5, [], 2.8); wallH(6, ox - 5, ox + 5, [], 2.8); wallV(ox - 5, -6, 6, [], 2.8); wallV(ox + 5, -6, 6, [], 2.8); wallKind = 'wall';
+    lamp('keller', ox, 2.3, 0, 0xffa050, .12, 9);
+    const r = grp(ox - 4.55, 0, 3.4); box(.5, 1.9, 1.6, M.dwood, 0, 0, 0, r); for (let i = 0; i < 3; i++) for (let j = 0; j < 4; j++) cyl(.07, .07, .16, M.metal, .05, .35 + i * .55, -.55 + j * .35, r); col(ox - 4.55, 3.4, .5, 1.6);
+    KE.regal = r; box(.07, .07, .07, new THREE.MeshBasicMaterial({ color: 0x8c8cff }), .27, 1.5, 0, r);
+    ia(r, 'Regal abtasten', () => {
+      if (!has('light')) { say('Deine Hände gleiten über Holz, Dosen, Spinnweben – und dann über etwas Schweres, Kaltes, Rundes: eine <b>Taschenlampe</b>! Du schaltest sie ein.'); S.battery = Math.min(1, S.battery + .55); give('light'); setLight(true); say('Tipp: Mit <b>F</b> schaltest du die Lampe an und aus. Die Batterie ist begrenzt – und <i>sie</i> hasst Licht.', 'ev'); }
+      else say('Dosen, Spinnweben, Staub.');
+    });
+    const wb = grp(ox - 2, 0, -5.4); box(2.2, .9, .8, M.wood, 0, 0, 0, wb); box(.12, .08, .5, M.metal, .8, .9, 0, wb); box(.3, .02, .2, Lm(0xcfc7a8), -.3, .9, 0, wb); col(ox - 2, -5.4, 2.2, .8);
+    ia(wb, 'Werkbank', () => { if (!has('diary')) { say('Unter einem Schraubstock klemmt eine vergilbte Seite aus einem Tagebuch.'); give('diary'); } else say('Werkzeug, Nägel, Sägespäne. Nichts weiter.'); });
+    const k = grp(ox + 3, 0, -3.4); box(1, .6, .7, M.wood, 0, 0, 0, k); box(1.05, .04, .75, M.dwood, 0, .6, 0, k); plane(.6, .15, Lm(0xcfc7a8), 0, .35, .36, 0, k); col(ox + 3, -3.4, 1, .7);
+    ia(k, 'Kiste „LENA“', () => say('Eine Holzkiste, beschriftet mit „LENA“. Das Vorhängeschloss ist verrostet und gibt nicht nach. Als du sie anhebst, klappert es leise darin – wie Murmeln.'));
+    const g2 = grp(ox + 4.55, 0, -.6); box(.4, 1.6, 2, M.dwood, 0, 0, 0, g2); for (let i = 0; i < 3; i++) for (let j = 0; j < 4; j++) cyl(.09, .09, .22, Lm(0x5a6a3a), -.05, .25 + i * .5, -.7 + j * .45, g2); col(ox + 4.55, -.6, .4, 2);
+    ia(g2, 'Einmachgläser', () => say('Pflaumen, „1994“. Dahinter an der Wand: sieben Kreidestriche. Jemand hat gezählt.'));
+    const gp = box(.1, 1.8, 1.2, M.dark, ox + 4.4, 0, 2.5); ia(gp, 'Verstecken – hinter die Regale', () => hideIn(HIDE.keller));
+    const st = grp(ox, 0, 5.4); for (let i = 0; i < 6; i++) box(2, .25 * (i + 1), .35, M.wood, 0, 0, -i * .35 + .6, st);
+    ia(st, 'Treppe hinauf', () => goArea('ground', { x: 2.5, z: 2.8, yaw: 0 })); col(ox, 5.6, 2, 1);
+  }
+
+  // =====================================================================
+  // Kinderzimmer (x ≈ 200)
+  // =====================================================================
+  const KI = {};
+  {
+    const ox = 200;
+    const f = plane(8, 8, M.floorS, ox, 0, 0); f.rotation.x = -Math.PI / 2; const c = plane(8, 8, M.ceil, ox, 2.7, 0); c.rotation.x = Math.PI / 2;
+    wallH(-4, ox - 4, ox + 4, [], 2.7); wallH(4, ox - 4, ox + 4, [], 2.7); wallV(ox - 4, -4, 4, [], 2.7); wallV(ox + 4, -4, 4, [], 2.7);
+    lamp('kinder', ox, 2.2, 0, 0x8a7aff, .12, 8);
+    for (let i = 0; i < 26; i++) { const s = plane(.1, .1, new THREE.MeshBasicMaterial({ color: 0xfde68a, fog: false, transparent: true, opacity: .5 }), ox - 3.88, rnd(.8, 2.4), rnd(-3.6, 3.6), Math.PI / 2); }
+    for (const z of [-1.6, 1]) { const b = grp(ox - 3, 0, z); box(.9, .4, 1.9, M.dwood, 0, 0, 0, b); box(.85, .15, 1.8, z < 0 ? Lm(0x6a5a8a) : Lm(0x5a7a8a), 0, .4, 0, b); col(ox - 3, z, .9, 1.9); if (z > 0) ia(b, 'Betten', () => say('Zwei Betten. Über einem steht „Lena“. Über dem anderen hängt ein verblichenes Namensschild. Es ist dein Bett. Du weißt es plötzlich – und dir wird kalt.')); else ia(b, 'Betten', () => say('Zwei Betten. Über einem steht „Lena“. Über dem anderen hängt ein verblichenes Namensschild. Es ist dein Bett. Du weißt es plötzlich – und dir wird kalt.')); }
+    const kt = grp(ox + 3.2, 0, 1); box(1.1, .55, .6, M.red, 0, 0, 0, kt); box(1.15, .05, .65, M.yellow, 0, .55, 0, kt); col(ox + 3.2, 1, 1.1, .6);
+    ia(kt, 'Spielzeugkiste', () => { if (!has('photo')) { say('Unter Bauklötzen und einer Stoffpuppe liegt ein zerrissenes Foto.'); give('photo'); } else say('Bauklötze, eine Stoffpuppe mit nur einem Auge. Sie scheint dich anzusehen.'); });
+    const h = grp(ox + 1, 0, -.5); KI.horse = h; box(.25, .1, 1, M.wood, 0, 0, 0, h); const body = box(.3, .5, .8, Lm(0x8a5a30), 0, .3, 0, h); box(.2, .45, .2, Lm(0x8a5a30), 0, .6, .45, h); box(.15, .3, .3, Lm(0x8a5a30), 0, .9, .6, h);
+    col(ox + 1, -.5, .5, 1);
+    ia(h, 'Schaukelpferd', () => say(S.ver.kinder < 1 ? 'Ein hölzernes Schaukelpferd. Es steht still.' : 'Das Pferd wippt – langsam, vor und zurück. Obwohl kein Luftzug geht.'));
+    const sp = grp(ox, 0, -3.5); box(1.4, .8, .1, M.dwood, 0, 0, 0, sp); const mb = box(.22, .16, .22, Lm(0x8a6a2a), 0, .8, 0, sp);
+    ia(sp, 'Spieluhr', () => { sfx.music(); say('Du drehst an der Kurbel. Eine zerbrechliche Melodie, ein Schlaflied. In der Dunkelheit meinst du, jemanden mitsummen zu hören.'); });
+    KI.music = sp;
+    const sc = grp(ox - 3.4, 0, -3); box(1.1, 2.2, .7, M.wood, 0, 0, 0, sc); col(ox - 3.4, -3, 1.1, .7);
+    const gp = box(.04, 1.8, .6, M.dark, ox - 2.84, 0, -3); ia(gp, 'Verstecken – in den Kleiderschrank', () => hideIn(HIDE.kinder));
+    const lad = grp(ox + 3.2, 0, -3.5); box(.08, 2.6, .08, M.dwood, -.3, 0, 0, lad); box(.08, 2.6, .08, M.dwood, .3, 0, 0, lad); for (let i = 0; i < 7; i++) box(.6, .05, .06, M.dwood, 0, .3 + i * .35, 0, lad);
+    ia(lad, 'Leiter zum Dachboden', () => goArea('dach')); col(ox + 3.2, -3.5, .8, .4);
+    const dn = plane(2, 1.6, M.dark, ox, .03, 3.2); dn.rotation.x = -Math.PI / 2; for (let i = 0; i < 4; i++) box(2, .02, .08, Lm(0x4a3a2a), ox, .03, 2.7 + i * .35);
+    ia(dn, 'Treppe hinunter', () => goArea('ground', { x: 6.5, z: 1.9, yaw: 0 })); col(ox, 3.4, 2.2, 1.4);
+  }
+
+  // =====================================================================
+  // Dachboden (x ≈ 300)
+  // =====================================================================
+  const DA = {};
+  {
+    const ox = 300;
+    const f = plane(10, 6, M.floorS, ox, 0, 0); f.rotation.x = -Math.PI / 2;
+    const r1 = box(10.4, .12, 3.4, M.ceil, ox, 0, -1.5); r1.position.y = 2.5; r1.rotation.x = -.436;
+    const r2 = box(10.4, .12, 3.4, M.ceil, ox, 0, 1.5); r2.position.y = 2.5; r2.rotation.x = .436;
+    wallKind = 'wood';
+    wallH(-3, ox - 5, ox + 5, [], 1.8); wallH(3, ox - 5, ox + 5, [], 1.8); wallV(ox - 5, -3, 3, [], 1.8); wallV(ox + 5, -3, 3, [], 1.8); wallKind = 'wall';
+    lamp('dach', ox, 2, 0, 0x8899cc, .22, 9);
+    for (let i = -3; i <= 3; i += 3) box(.12, 2.2, .12, M.dwood, ox + i * 1.5, 0, 0);
+    const k = grp(ox - 3, 0, -.5); box(1, .45, .6, Lm(0x5a3a22), 0, 0, 0, k); box(1.05, .06, .65, Lm(0x6a4a2a), 0, .45, 0, k); box(.06, .1, .02, M.metal, -.2, .3, .31, k); box(.06, .1, .02, M.metal, .2, .3, .31, k); col(ox - 3, -.5, 1, .6);
+    ia(k, 'Koffer', () => { if (!has('letter')) { say('Ein Lederkoffer mit zwei Schnallen. Kinderkleider, ein Stoffhase – und darunter ein Brief.'); give('letter'); } else say('Kinderkleider, ein Stoffhase. Er lächelt schief.'); });
+    const ch = grp(ox + 1, 0, 1); DA.chair = ch; box(.5, .06, .5, M.wood, 0, .45, 0, ch); box(.5, .7, .05, M.wood, 0, .5, -.22, ch); box(.05, .1, .6, M.dwood, -.25, 0, 0, ch); box(.05, .1, .6, M.dwood, .25, 0, 0, ch); col(ox + 1, 1, .6, .6);
+    ia(ch, 'Schaukelstuhl', () => say('Er wippt leicht. Auf der Lehne liegt ein rotes Zopfgummi.'));
+    const mr = grp(ox + 3.6, 0, -1.8); box(.9, 1.9, .12, M.cloth, 0, 0, 0, mr); box(.7, 1.6, .02, Lm(0x2a3444), 0, .12, .07, mr); col(ox + 3.6, -1.8, .9, .3); DA.mirror = mr;
+    ia(mr, 'Laken', () => {
+      if (hints() === 3) openModal(`<h2>🪞 Der Spiegel</h2><p>Du ziehst das Laken weg. Im Spiegel steht <b>Lena</b>: ein kleines Mädchen mit Zöpfen, die Hand von innen gegen das Glas gelegt. Sie lächelt – und sie sieht sehr müde aus. Das Glas ist kein Glas mehr, nur Kälte, die dich anzieht.</p><button class="btn" data-a="end:spiegel">Deine Hand auf ihre legen</button><br><button class="btn alt" data-a="close">Zurücktreten</button>`);
+      else say('Du ziehst das Laken weg: ein Standspiegel. Du siehst dich – und hinter dir ein kleines Mädchen mit Zöpfen. Du fährst herum. Niemand. Im Spiegel ist sie auch weg.', 'scary');
+    });
+    const gp = box(.1, 1.2, .9, M.dark, ox - 3.55, 0, -.5); ia(gp, 'Verstecken – hinter die Koffer', () => hideIn(HIDE.dach));
+    const lad = grp(ox - 4.2, 0, 2.3); box(.08, 2.6, .08, M.dwood, -.3, 0, 0, lad); box(.08, 2.6, .08, M.dwood, .3, 0, 0, lad); for (let i = 0; i < 7; i++) box(.6, .05, .06, M.dwood, 0, .3 + i * .35, 0, lad);
+    ia(lad, 'Leiter hinab', () => goArea('kinder', { x: 203, z: -2.2, yaw: 0 })); col(ox - 4.2, 2.3, .8, .4);
+    plane(1, 1, new THREE.MeshBasicMaterial({ color: 0x8899bb, fog: false, transparent: true, opacity: .5 }), ox + 2, 2.1, -2.5, 0).rotation.x = .3;
+  }
+
+  // =====================================================================
+  // Verstecke
+  // =====================================================================
+  const HIDE = {
+    schlaf: { x: -6.55, z: -5.3, yaw: Math.PI / 2, out: [-5.5, -5.3], name: 'unters Bett', txt: 'Du rollst dich unters Bett. Staub in Mund und Nase. Zwei bleiche, nackte Füße betreten das Zimmer und bleiben direkt neben deinem Gesicht stehen. Etwas beugt sich langsam herunter … riecht … und geht wieder.' },
+    flur: { x: -.9, z: 1.2, yaw: Math.PI, out: [-.9, .4], name: 'Garderobe', txt: 'Du drückst dich zwischen die Mäntel. Der Stoff riecht nach Mottenkugeln und etwas Süßlichem. Durch den Spalt siehst du Beine, viel zu lang, die im Flur auf und ab gehen. Ein Atmen, ganz nah. Dann entfernen sich die Schritte.' },
+    wohn: { x: -.85, z: -4.2, yaw: -Math.PI / 2, out: [-1.8, -4.2], name: 'hinters Sofa', txt: 'Du kauerst hinter dem Sofa. Das Laken zittert, als etwas daran vorbeistreicht. Die Standuhr tickt – einmal – und verstummt. Du zählst bis hundert, ohne zu atmen.' },
+    kueche: { x: -5.2, z: 5.2, yaw: 0, out: [-5.2, 3.9], name: 'unter den Tisch', txt: 'Du kriechst unter den Tisch. Zwei bleiche Hände greifen die Lehne eines Stuhls, rücken ihn ab – und setzen sich. Es wartet. Minutenlang. Dann steht es auf und geht.' },
+    bad: { x: 7.7, z: -2.2, yaw: Math.PI / 2, out: [6.6, -2.4], name: 'Duschvorhang', txt: 'Du ziehst den Vorhang zu. Durch den Spalt siehst du im Spiegel, wie etwas hinter dir steht – und dein Spiegelbild nicht findet. Es wartet, dreht sich um, geht.' },
+    keller: { x: 104.3, z: 2.5, yaw: Math.PI / 2, out: [103, 2.5], name: 'hinter die Regale', txt: 'Du zwängst dich zwischen Regal und Wand und schaltest das Licht aus. Gläser klirren. Etwas streicht an den Steinwänden entlang, langsam, wie eine tastende Hand.' },
+    kinder: { x: 197.3, z: -3, yaw: -Math.PI / 2, out: [198.8, -2.4], name: 'Kleiderschrank', txt: 'Du schließt dich im Kleiderschrank ein. Durch den Türspalt: Das Schaukelpferd wippt wie wild, die Spieluhr spielt – dann bricht sie ab. Jemand summt das Lied mit, direkt vor der Tür. Dann: Stille.' },
+    dach: { x: 296.5, z: -.5, yaw: -Math.PI / 2, out: [298, -.5], name: 'hinter die Koffer', txt: 'Du duckst dich hinter die Koffer. Balken knarren. Das Laken über dem Spiegel gleitet langsam zu Boden. Etwas sieht hinein – und weiß nicht, dass du da bist.' }
+  };
+  Object.values(HIDE).forEach(h => { h.burn = 0; });
+
+  // =====================================================================
+  // Die Gestalt
+  // =====================================================================
+  const NODES = { f0: [-6, 0], f1: [0, 0], f2: [2.5, 0], f3: [7, 0], s0: [-6, -3], s1: [-6, -6], w0: [0, -3], w1: [0, -6], b0: [7, -3], k0: [-5, 3], k1: [-5, 6], kt: [2.5, 3], a0: [6.5, 3] };
+  const EDGES = [['f0', 'f1'], ['f1', 'f2'], ['f2', 'f3'], ['f0', 's0'], ['s0', 's1'], ['f1', 'w0'], ['w0', 'w1'], ['f3', 'b0'], ['f0', 'k0'], ['k0', 'k1'], ['f2', 'kt'], ['f3', 'a0']];
+  const ADJ = {}; Object.keys(NODES).forEach(k => ADJ[k] = []); EDGES.forEach(([a, b]) => { ADJ[a].push(b); ADJ[b].push(a); });
+  const nearNode = (x, z) => Object.keys(NODES).reduce((a, b) => Math.hypot(NODES[b][0] - x, NODES[b][1] - z) < Math.hypot(NODES[a][0] - x, NODES[a][1] - z) ? b : a);
+  function bfsPath(from, to) {
+    const prev = { [from]: null }, q = [from];
+    while (q.length) { const c = q.shift(); if (c === to) break; for (const n of ADJ[c]) if (!(n in prev)) { prev[n] = c; q.push(n); } }
+    const path = []; let c = to; while (c && c !== from) { path.unshift(c); c = prev[c]; } return path;
+  }
+  const GSPAWN = {
+    keller: [[95.8, -5], [104.3, -5], [96, 5]], kinder: [[196.5, -3.2], [203.5, -3.2], [203.5, 0]], dach: [[295.5, -2.5], [304.5, -2.5], [304.5, 2.5]]
+  };
+  const G = { mode: 'away', timer: 50, x: 0, z: 0, area: 'ground', path: [], pathT: 0, lit: 0, search: 0, walk: 0, mesh: null, stepT: 0 };
+  {
+    const g = new THREE.Group(), m = Lm(0x0c0c10);
+    const legL = box(.1, .95, .1, m, -.1, 0, 0, g), legR = box(.1, .95, .1, m, .1, 0, 0, g);
+    box(.34, .95, .2, m, 0, .95, 0, g);
+    const head = sph(.17, m, 0, 2.1, 0, g, 1, 1.45, 1);
+    const armL = cyl(.04, .03, 1.35, m, -.26, .55, 0, g, 6), armR = cyl(.04, .03, 1.35, m, .26, .55, 0, g, 6);
+    const eyeM = new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false });
+    const e1 = new THREE.Mesh(new THREE.CircleGeometry(.035, 10), eyeM); e1.position.set(-.07, 2.14, .16); g.add(e1);
+    const e2 = e1.clone(); e2.position.x = .07; g.add(e2);
+    g.userData = { legL, legR, armL, armR }; g.visible = false; scene.add(g); G.mesh = g;
+  }
+  const W1 = ['Schwere, nasse Schritte. Irgendwo ganz nah.', 'Fingernägel kratzen über Holz. Hinter der nächsten Wand.', 'Etwas atmet. Es ist nicht dein Atem.'];
+  const W2 = ['Irgendwo im Haus knarrt eine Diele. Langsam. Regelmäßig.', 'Ein Schleifen, als zöge etwas Langes seine Beine nach.', 'Das Haus hält den Atem an. Dann: Schritte.'];
+
+  function segHitsWall(ax, az, bx, bz) {
+    for (const w of walls) {
+      if (!w.on) continue;
+      let t0 = 0, t1 = 1; const dx = bx - ax, dz = bz - az;
+      const p = [-dx, dx, -dz, dz], q = [ax - w.x1, w.x2 - ax, az - w.z1, w.z2 - az];
+      let ok = true;
+      for (let i = 0; i < 4; i++) { if (p[i] === 0) { if (q[i] < 0) { ok = false; break; } } else { const r = q[i] / p[i]; if (p[i] < 0) { if (r > t1) { ok = false; break; } if (r > t0) t0 = r; } else { if (r < t0) { ok = false; break; } if (r < t1) t1 = r; } } }
+      if (ok && t0 <= t1) return true;
+    }
+    return false;
+  }
+  function spawnG(area) {
+    let cands;
+    if (area === 'ground') cands = Object.values(NODES).filter(n => Math.hypot(n[0] - P.x, n[1] - P.z) >= 11);
+    else cands = GSPAWN[area].filter(n => Math.hypot(n[0] - P.x, n[1] - P.z) >= 5);
+    if (!cands || !cands.length) cands = [(area === 'ground' ? Object.values(NODES) : GSPAWN[area]).reduce((a, b) => Math.hypot(a[0] - P.x, a[1] - P.z) > Math.hypot(b[0] - P.x, b[1] - P.z) ? a : b)];
+    const c = pick(cands); G.x = c[0]; G.z = c[1]; G.area = area; G.mode = 'hunt'; G.path = []; G.pathT = 0; G.lit = 0; G.search = 0;
+    G.mesh.visible = true; sfx.whisper(); say(pick(W2), 'ev');
+  }
+  function despawnG(t) { G.mode = 'away'; G.mesh.visible = false; G.timer = t; G.lit = 0; }
+  const awayTime = () => rnd(26, 40) - 14 * (S.T / TOTAL);
+  function gestaltUpdate(dt) {
+    const a = areaOf(P.x);
+    if (G.mode === 'away') {
+      if (S.T > 45 && !S.hidden) { G.timer -= dt; if (G.timer <= 0) spawnG(a); }
+      else if (S.hidden) G.timer = Math.max(G.timer, 2);
+      return;
+    }
+    if (G.area !== a) { despawnG(rnd(10, 16)); return; }
+    const dx = P.x - G.x, dz = P.z - G.z, d = Math.hypot(dx, dz);
+    let tx = P.x, tz = P.z, sp = 1.5 + .8 * (S.T / TOTAL);
+    if (S.hidden) { const h = S.hidden.spot; tx = h.out[0]; tz = h.out[1]; }
+    const dist2 = Math.hypot(tx - G.x, tz - G.z);
+    if (G.mode === 'search') {
+      G.search -= dt; G.mesh.rotation.y = Math.atan2(S.hidden ? S.hidden.spot.x - G.x : dx, S.hidden ? S.hidden.spot.z - G.z : dz);
+      if (G.search <= 0) { if (S.hidden) S.hidden.spot.burn = S.T + 80; despawnG(awayTime()); say('Die Schritte entfernen sich. Du wagst wieder zu atmen.', 'ev'); }
+      return;
+    }
+    if (S.hidden) {
+      if (dist2 < 1.4) {
+        if (S.hidden.spot.burn > S.T) { caught('Sie reißt die Tür auf. Sie wusste es.'); return; }
+        G.mode = 'search'; G.search = 4.5; say('Sie steht direkt vor deinem Versteck. Das Licht des Spalts wird dunkler …', 'scary'); return;
+      }
+    } else {
+      if (d < 1.05) { caught(pick(['Eiskalte Finger legen sich um dein Handgelenk.', 'Sie beugt sich zu dir herunter, so nah, dass du ihren Atem spürst. Er ist kalt.'])); return; }
+      if (d < 5 && !segHitsWall(G.x, G.z, P.x, P.z)) sp += .7;
+    }
+    // Weg: Erdgeschoss über Wegpunkte, sonst direkt
+    if (G.area === 'ground' && dist2 > 2.2) {
+      G.pathT -= dt;
+      if (G.pathT <= 0 || !G.path.length) { G.pathT = .6; const a0 = nearNode(G.x, G.z), b0 = nearNode(tx, tz); G.path = a0 === b0 ? [] : bfsPath(a0, b0); }
+      if (G.path.length) { const n = NODES[G.path[0]]; if (Math.hypot(n[0] - G.x, n[1] - G.z) < .35) G.path.shift(); if (G.path.length) { tx = NODES[G.path[0]][0]; tz = NODES[G.path[0]][1]; } }
+    }
+    const ex = tx - G.x, ez = tz - G.z, el = Math.hypot(ex, ez) || 1;
+    G.x += ex / el * sp * dt; G.z += ez / el * sp * dt;
+    G.mesh.position.set(G.x, 0, G.z);
+    G.mesh.rotation.y = Math.atan2(ex, ez);
+    G.walk += dt * sp * 3.2; const u = G.mesh.userData;
+    u.legL.rotation.x = Math.sin(G.walk) * .5; u.legR.rotation.x = -Math.sin(G.walk) * .5; u.armL.rotation.x = -Math.sin(G.walk) * .2; u.armR.rotation.x = Math.sin(G.walk) * .2;
+    G.mesh.position.y = Math.abs(Math.sin(G.walk)) * .03;
+    // Schritte & Warnungen
+    G.stepT -= dt;
+    if (G.stepT <= 0 && d < 16) { G.stepT = .75 - Math.min(.2, sp * .06); sfx.gstep(clamp(1 - d / 16, .05, 1)); }
+    if (!G.warned1 && d < 9) { G.warned1 = true; say(pick(W1), 'ev scary'); }
+    if (d > 13) G.warned1 = false;
+    // Taschenlampe
+    if (S.lightOn && S.battery > 0 && !S.hidden && d < 10) {
+      const fx = -Math.sin(P.yaw) * Math.cos(P.pitch), fz = -Math.cos(P.yaw) * Math.cos(P.pitch), fy = Math.sin(P.pitch);
+      const vx = G.x - P.x, vz = G.z - P.z, vy = 1.3 - 1.6, vl = Math.hypot(vx, vy, vz);
+      const dot = (fx * vx + fy * vy + fz * vz) / vl;
+      if (dot > .93 && !segHitsWall(P.x, P.z, G.x, G.z)) G.lit += dt; else G.lit = Math.max(0, G.lit - dt);
+      if (G.lit > .7) { S.battery = Math.max(0, S.battery - .08); say('Du richtest den Lichtkegel auf sie. Ein Schrei, der aus den Wänden kommt – dann ist sie fort. Zurück bleibt ein Geruch nach nassem Stein.', 'chg scary'); sfx.scare(); shake = .8; despawnG(awayTime() + 8); }
+    } else G.lit = Math.max(0, G.lit - dt);
+  }
+
+  // =====================================================================
+  // Spiel-Logik
+  // =====================================================================
+  const subEl = $('sub');
+  function say(t, c = '') {
+    const p = document.createElement('p'); if (c) p.className = c; p.innerHTML = t; subEl.appendChild(p);
+    while (subEl.children.length > 4) subEl.firstChild.remove();
+    const ms = 4500 + t.length * 38; setTimeout(() => { p.style.transition = 'opacity .8s'; p.style.opacity = 0; setTimeout(() => p.remove(), 850); }, ms);
+  }
+  function give(k) { S.inv[k] = 1; sfx.got(); say(`<b>${ITEMS[k].e} ${ITEMS[k].n}</b> gefunden!`, 'got'); hud(); if (HINTS.includes(k)) reader(k); }
+  function setLight(on) { S.lightOn = on && has('light') && S.battery > 0; torch.visible = S.lightOn; hud(); }
+
+  const EVENTS = [
+    { at: 55, t: 'Irgendwo im Haus schlägt eine Tür zu.', s: () => sfx.creak() },
+    { at: 130, t: 'Etwas geht durch das Haus. Etwas Schweres, Langsames. Du solltest nicht hier sein, wenn es dich findet.', s: () => sfx.whisper() },
+    { at: 200, t: 'Ein leises Kinderlachen. Du hältst den Atem an – Stille.', s: () => sfx.scare() },
+    { at: 430, t: 'Hinter dir knarren die Dielen. Du drehst dich um. Nichts.', s: () => sfx.creak() },
+    { at: 590, t: 'Es riecht plötzlich nach Kerzenwachs und kaltem Rauch.' },
+    { at: 770, t: 'Jemand flüstert deinen Namen. Direkt neben deinem Ohr. Du bist allein.', s: () => sfx.whisper() },
+    { at: 960, t: 'Die Luft wird dünn. Es ist, als würde das Haus ungeduldig werden. Bald ist es drei.', s: () => sfx.scare() },
+    { at: 1150, t: 'Von der Haustür kommt ein dumpfes Klopfen. Dreimal. Dann Stille.', s: () => sfx.knock() },
+    { at: 1230, t: 'Du hörst ein leises Ticken – von der Standuhr, die doch stillsteht.', s: () => sfx.scare() }
+  ];
+  // Veränderungen im Hintergrund (werden angewendet, wenn du nicht hinsiehst)
+  const CHANGES = [
+    { room: 'wohn', at: 300, v: 1, text: 'Das Gemälde über dem Kamin … irgendetwas daran ist anders als vorhin.', apply() { WZ.drawP(1); WZ.ptex.needsUpdate = true; } },
+    { room: 'wohn', at: 900, v: 2, text: 'Am Fenster hat jemand gestanden. Das Gemälde zeigt das Mädchen nicht mehr.', apply() { WZ.drawP(2); WZ.ptex.needsUpdate = true; WZ.win.redraw(true); } },
+    { room: 'kueche', at: 420, v: 1, text: 'Die Küche riecht seltsam – nach frisch gekochtem Essen? Das ist unmöglich.', apply() { KU.plates.visible = true; } },
+    { room: 'kueche', at: 1000, v: 2, text: 'Alle Stühle sind umgekippt. Der Wasserhahn tropft nicht mehr.', apply() { KU.plates.visible = false; KU.chairs.forEach(c => { c.rotation.z = 1.5; c.position.y = .2; }); } },
+    { room: 'bad', at: 360, v: 1, text: 'Der Spiegel ist beschlagen – von innen? Da steht etwas.', apply() { BA.draw(1); BA.tex.needsUpdate = true; } },
+    { room: 'bad', at: 960, v: 2, text: 'Auf dem Spiegel steht wieder etwas. Neue Schrift.', apply() { BA.draw(2); BA.tex.needsUpdate = true; } },
+    { room: 'schlaf', at: 600, v: 1, text: 'Auf dem Bett sitzt jetzt ein kleiner Teddybär. Das war vorhin nicht so.', apply() { SZ.teddy.visible = true; SZ.win.redraw(true); } },
+    { room: 'schlaf', at: 1100, v: 2, text: 'Die Bettdecke ist zurückgeschlagen. Neben deiner Kuhle ist eine zweite.', apply() { SZ.hollow2.visible = true; } },
+    { room: 'kinder', at: 480, v: 1, text: 'Das Schaukelpferd bewegt sich. Ganz langsam. Vor und zurück.', apply() { KI.rock = true; } },
+    { room: 'kinder', at: 1050, v: 2, text: 'Die Spieluhr spielt – von allein. Die Melodie bricht ab, sobald du hinsiehst.', apply() { KI.autoMusic = true; } },
+    { room: 'flur', at: 540, v: 1, text: 'Das Telefon klingelt – obwohl die Leitung tot sein müsste.', apply() { FL.phoneRing = true; } }
+  ];
+  CHANGES.forEach(c => { c.state = 0; });
+
+  function hud() {
+    if (!S) return;
+    let h = '';
+    for (const k in ITEMS) { const isH = HINTS.includes(k); h += `<button class="slot ${has(k) ? '' : 'empty'} ${isH ? 'hint' : ''} ${k === 'light' && S.lightOn ? 'on' : ''}" data-k="${k}" title="${has(k) ? ITEMS[k].n : '???'}">${has(k) ? ITEMS[k].e : '❔'}</button>`; }
+    const d = i => [S.inv.diary, S.inv.photo, S.inv.letter][i] ? CODE[i] : '?';
+    if (hints()) h += `<span id="code">Code: ${d(0)}·${d(1)}·${d(2)}</span>`;
+    $('inv').innerHTML = h;
+    $('nerv').textContent = '❤️'.repeat(Math.max(0, S.lives)) + '🖤'.repeat(Math.max(0, 3 - S.lives));
+    $('bBatW').style.display = has('light') ? '' : 'none'; $('bars').firstChild.style.display = has('light') ? '' : 'none';
+  }
+  $('inv').addEventListener('click', e => {
+    const b = e.target.closest('.slot'); if (!b || !S || !has(b.dataset.k)) return;
+    const k = b.dataset.k; if (HINTS.includes(k)) reader(k); else if (k === 'light') toggleLight(); else say(`<b>${ITEMS[k].e} ${ITEMS[k].n}:</b> ${ITEMS[k].d}`);
+  });
+  function toggleLight() { if (!S || !has('light')) return; if (S.battery <= 0) return say('Die Batterie ist leer.', 'ev'); setLight(!S.lightOn); sfx.click(); }
+
+  // ---- Modals ----
+  const modalEl = $('modal');
+  function openModal(html) { $('mbox').innerHTML = html; modalEl.classList.remove('hidden'); document.exitPointerLock && document.exitPointerLock(); }
+  function closeModal() { modalEl.classList.add('hidden'); if (!TOUCH && playing && !noLock) cv.requestPointerLock && cv.requestPointerLock(); }
+  function reader(k) { openModal(`<h2>${ITEMS[k].e} ${ITEMS[k].n}</h2>${READ[k]}<button class="btn" data-a="close">Weiter</button>`); }
+  modalEl.addEventListener('click', e => {
+    const b = e.target.closest('[data-a]'); if (!b) return;
+    const a = b.dataset.a;
+    if (a === 'close') closeModal();
+    else if (a[0] === 'u' || a[0] === 'd') { const i = +a[1]; S.code[i] = (S.code[i] + (a[0] === 'u' ? 1 : 9)) % 10; sfx.click(); lockUI(); }
+    else if (a === 'try') tryCode();
+    else if (a === 'flee') { closeModal(); hints() === 0 ? ending('ahnungslos') : ending('halb', hints() === 3 ? 'back3' : 'back'); }
+    else if (a.startsWith('end:')) { closeModal(); ending(a.slice(4)); }
+  });
+  function openLock() { S.lockMsg = 'Die Haustür ist mit einem schweren Zahlenschloss gesichert. Drei Ziffern.'; lockUI(); }
+  function lockUI() {
+    const note = [S.inv.diary ? CODE[0] : '?', S.inv.photo ? CODE[1] : '?', S.inv.letter ? CODE[2] : '?'].join(' · ');
+    openModal(`<h2>🔢 Zahlenschloss</h2><p class="dim">${S.lockMsg}</p>
+      <div class="digits">${S.code.map((d, i) => `<div class="dg"><button data-a="u${i}">▲</button><div>${d}</div><button data-a="d${i}">▼</button></div>`).join('')}</div>
+      <p class="err" id="err"></p><p class="dim" style="text-align:center">Notizen: ${note}</p>
+      <div style="text-align:center"><button class="btn" data-a="try">Öffnen</button><button class="btn alt" data-a="close">Zurück</button></div>`);
+  }
+  function tryCode() {
+    if (S.code.join('') === CODE.join('')) {
+      sfx.got();
+      if (hints() === 3) openModal(`<h2>🚪 Die Haustür ist offen</h2><p>Das Schloss springt auf. Kalte Morgenluft strömt herein – und hinter dir, im Haus, wird es ganz still. Als würde alles den Atem anhalten.</p><p>Du hast alle Hinweise gelesen. Was tust du?</p>
+        <button class="btn" data-a="end:freiheit">Hinausgehen</button><br><button class="btn" data-a="end:frieden">Lenas Namen rufen</button><br><button class="btn alt" data-a="end:bleiben">Im Haus bleiben</button><br><button class="btn alt" data-a="close">Noch nicht</button>`);
+      else { closeModal(); ending('halb', 'guess'); }
+    } else { sfx.click(); $('err').textContent = 'Klack. Das Schloss bleibt zu.'; }
+  }
+  function backDoor() {
+    if (!has('key')) return say('Die Hintertür ist abgeschlossen. Das Schloss ist alt – es braucht einen Schlüssel.');
+    if (!has('light')) return say('Du schließt auf und spähst hinaus: Nebel, pechschwarz. Ohne Licht würdest du dich im Garten verirren. Du schließt wieder zu.');
+    openModal(`<h2>🚪 Die Hintertür</h2><p>Der Schlüssel dreht sich. Draußen: Nebel, ein Gartentor in der Ferne, dein Lichtkegel zeigt den Weg. Du könntest einfach laufen.</p>
+      <p class="dim">Du hast ${Object.keys(S.inv).length} von 5 Gegenständen, davon ${hints()} von 3 Hinweisen.</p>
+      <button class="btn" data-a="flee">Fliehen</button><button class="btn alt" data-a="close">Noch nicht</button>`);
+  }
+
+  // ---- Enden ----
+  const ENDS = {
+    ahnungslos: { n: 1, t: 'Ahnungslos', x: () => `<p>Das Schloss springt auf. Du stolperst in den Garten, und der Nebel schluckt das Haus hinter dir. Du rennst durch das verrostete Tor, die Straße hinab, bis die Lichter einer Tankstelle auftauchen.</p><p>Du weißt nicht, wo du warst. Du weißt nicht, warum. Nur manchmal, nachts, wenn es um 3:07 Uhr plötzlich ganz still wird, hörst du ein Kinderlachen, weit weg.</p><p><i>Du bist entkommen – aber du hast nichts verstanden.</i></p>` },
+    halb: { n: 2, t: 'Halbe Wahrheit', x: v => (v === 'guess' ? `<p>Du drehst die Ziffern: 3 – 0 – 7. Es klickt. Die Zeit, in der die Standuhr stehen blieb, war der Schlüssel. Du öffnest die Tür und gehst hinaus ins Morgengrau.</p>` : v === 'back3' ? `<p>Du kennst jetzt die ganze Geschichte – und läufst trotzdem. Durch die Hintertür, in den Nebel, ohne dich umzudrehen.</p>` : `<p>Du schließt die Hintertür auf und läufst in den Nebel, die Taschenlampe zitternd in der Hand.</p>`) + `<p>Du kennst einen Namen: <b>Lena</b>. Du hast Bruchstücke gelesen, ein Foto, eine Seite, die dich nicht loslässt. Aber das Ganze fehlt. Du fährst weg – und das Gefühl, etwas zurückgelassen zu haben, fährt mit.</p><p><i>Du hast einen Teil der Wahrheit. Der Rest bleibt im Haus.</i></p>` },
+    freiheit: { n: 3, t: 'Freiheit', x: () => `<p>Du trittst hinaus. Das Morgenlicht ist blendend, Vögel singen, als hätte es das alles nie gegeben. Hinter dir fällt die Tür leise ins Schloss.</p><p>Du hast alles gelesen, alles verstanden – und gehst trotzdem, ohne ein Wort. Im Haus, oben im Kinderzimmer, brennt ein winziges Licht.</p><p><i>Du bist frei. Aber Lena wartet noch immer.</i></p>` },
+    frieden: { n: 4, t: 'Lenas Frieden', x: () => `<p>„<b>Lena</b>.“</p><p>Dein Flüstern hallt durch das ganze Haus. Es holt tief Luft. Zwischen den Dielen, in den Wänden, im Dach – ein Seufzen wie von jemandem, der lange gewartet hat.</p><p>Eine kleine, warme Hand schiebt sich in deine. Du siehst sie nicht, aber du spürst ihr Lachen. Und jetzt erinnerst du dich: Ihr habt Verstecken gespielt. Du hast gezählt, bist müde geworden und hast aufgehört zu suchen. Es war nie deine Schuld – nur ein Kind, das eingeschlafen ist.</p><p>Die Haustür schwingt auf. Sonnenlicht. Die Hand lässt los, und für einen Augenblick tanzen zwei Schatten über die Schwelle – dann ist da nur noch Licht. Das Haus knackt ein letztes Mal und schläft ein.</p><p><i>Du hast sie endlich gefunden. Und sie dich.</i></p>` },
+    bleiben: { n: 5, t: 'Für immer zu Hause', x: () => `<p>Du lässt die Klinke los und setzt dich auf die unterste Treppenstufe. Das Haus fühlt sich plötzlich warm an. Oben gehen Schritte, ein Lachen, eine Spieluhr.</p><p>Die Türen stehen offen, aber niemand geht hinaus. Draußen vergehen Jahre. Im Wohnzimmer hängt ein neues Gemälde: ein Mann, eine Frau, ein kleines Mädchen mit Zöpfen – und du, mit ernstem Blick.</p><p><i>Du bist wieder zu Hause. Für immer.</i></p>` },
+    behaelt: { n: 6, t: 'Das Haus behält dich', x: () => `<p>Es ist <b>3:07 Uhr</b>. Im Wohnzimmer schlägt die Standuhr – obwohl sie stillstand. Alle Türen fallen gleichzeitig zu. ${S && has('light') ? 'Die Taschenlampe flackert und erlischt.' : 'Die Dunkelheit wird dichter.'}</p><p>Hinter dir atmet etwas. Du drehst dich nicht um. Du kennst das Haus jetzt gut genug, um zu wissen, dass es nicht mehr wartet.</p><p><i>Um 3:07 Uhr hört das Haus auf zu warten. Und beginnt, dich zu behalten.</i></p>` },
+    verschlungen: { n: 7, t: 'Verschlungen', x: () => `<p>Zum dritten Mal schließen sich kalte Finger um dich. Diesmal wachst du nicht im Schlafzimmer auf.</p><p>Es wird warm, und still, und du begreifst, wie das Haus all die Jahre überlebt hat: von denen, die geblieben sind. Deine Schritte werden zu Dielen, die knarren. Dein Atem wird zum Luftzug im Flur.</p><p>Jahre später zieht eine Familie ein, streicht die Wände, hängt Bilder auf. Nachts um 3:07 Uhr wacht jemand auf und hört Schritte im Flur. Langsam. Regelmäßig. Und vor der Tür: ein Atmen.</p><p><i>Du bist jetzt das, wovor du dich versteckt hast.</i></p>` },
+    spiegel: { n: 8, t: 'Hinter dem Spiegel', x: () => `<p>Du legst deine Hand auf ihre. Das Glas gibt nach wie kaltes Wasser. Lena lächelt, zum ersten Mal richtig, und ihre Finger schließen sich um deine. „Danke“, flüstert sie. „Jetzt darf ich gehen.“</p><p>Dann ist da ein sanfter, unwiderstehlicher Zug – und du stehst auf der anderen Seite des Glases. Durch das staubige Dachfenster siehst du ein kleines Mädchen mit Zöpfen durch den Garten laufen, endlich, lachend, hinein in die Morgensonne.</p><p>Dann ist es still. Du setzt dich auf die unterste Stufe, und irgendwo im Haus schlägt eine Uhr. Jemand muss warten, bis wieder jemand kommt.</p><p><i>Jetzt bist du es.</i></p>` }
+  };
+  const loadEnds = () => { try { return JSON.parse(localStorage.getItem('haus-enden') || '[]'); } catch (e) { return []; } };
+  function ending(id, variant) {
+    if (S.over) return;
+    S.over = true; closeModalSilent(); $('blk').classList.remove('on'); $('jump').style.display = 'none'; torch.visible = false;
+    document.exitPointerLock && document.exitPointerLock();
+    const e = ENDS[id], found = loadEnds(), N = Object.keys(ENDS).length;
+    if (!found.includes(id)) { found.push(id); try { localStorage.setItem('haus-enden', JSON.stringify(found)); } catch (x) {} }
+    sfx[['behaelt', 'bleiben', 'verschlungen'].includes(id) ? 'scare' : 'got']();
+    applyFear();
+    $('ebox').innerHTML = `<div class="no">Ende ${e.n} von ${N}</div><h1>${e.t}</h1>${e.x(variant)}
+      <p class="dim" style="text-align:center">Gegenstände: ${Object.keys(S.inv).length} von 5 · Enden entdeckt: ${found.length} von ${N}</p>
+      <div style="text-align:center"><button class="btn" id="again">Noch einmal</button> <a href="haus.html" style="margin-left:10px">2D-Version</a></div>`;
+    $('end').classList.remove('hidden');
+    $('again').onclick = () => { $('end').classList.add('hidden'); newGame(); lockPointer(); };
+  }
+  function closeModalSilent() { modalEl.classList.add('hidden'); }
+
+  // ---- Bereichswechsel / Verstecken / Gefangen ----
+  const blk = $('blk');
+  let busy = false;
+  function teleport(area, sp) {
+    const a = AREAS[area], s = sp || a.spawn;
+    P.x = s.x; P.z = s.z; P.yaw = s.yaw; P.pitch = 0;
+    amb.intensity = a.amb; scene.fog.density = a.fog; scene.fog.color.set(0x020106);
+    for (const k in areaLights) areaLights[k].forEach(l => { l.visible = k === area; });
+    if (G.mode !== 'away') despawnG(rnd(10, 16));
+  }
+  function goArea(area, sp) {
+    if (busy) return; busy = true; blk.textContent = ''; blk.classList.add('on'); sfx.step(2);
+    setTimeout(() => { teleport(area, sp); if (area === 'keller') say('<i>Stockfinster. Es riecht nach feuchter Erde und altem Holz. Links an der Wand schimmert etwas – ein Regal?</i>', 'ev'); blk.classList.remove('on'); setTimeout(() => { busy = false; }, 250); }, 500);
+  }
+  function hideIn(spot) {
+    if (S.hidden) return;
+    if (G.mode === 'hunt' && G.area === areaOf(P.x) && Math.hypot(G.x - P.x, G.z - P.z) < 2.6) return say('Sie ist zu nah!', 'scary');
+    S.hidden = { spot, t: 0, px: P.x, pz: P.z, yaw: P.yaw };
+    P.x = spot.x; P.z = spot.z; P.yaw = spot.yaw; P.pitch = 0; sfx.step(1);
+    say(spot.txt, 'chg scary');
+    if (G.mode === 'hunt' && spot.burn > S.T) say('Dieses Versteck kennt sie schon …', 'ev');
+    if (G.mode === 'away' ) spot.burn = Math.max(spot.burn, S.T + 20);
+  }
+  function unhide() {
+    if (!S.hidden) return;
+    if (G.mode === 'search' && Math.hypot(G.x - S.hidden.spot.out[0], G.z - S.hidden.spot.out[1]) < 2.5) return caught('Du bewegst dich – und sie hört es.');
+    const o = S.hidden.spot.out; P.x = o[0]; P.z = o[1]; S.hidden = null;
+  }
+  let shake = 0;
+  function caught(txt) {
+    if (S.caughtLock || S.over) return; S.caughtLock = true;
+    S.hidden = null; G.mesh.visible = false; G.mode = 'away'; G.timer = 40;
+    S.lives--; shake = 1; sfx.caught(); sfx.scare(); say(txt, 'chg scary'); hud();
+    $('jump').innerHTML = FIG; $('jump').style.display = 'grid';
+    setTimeout(() => {
+      $('jump').style.display = 'none';
+      if (S.lives <= 0) { S.caughtLock = false; ending('verschlungen'); return; }
+      blk.textContent = S.lives === 1 ? 'Dir wird schwarz vor Augen … Ein drittes Mal überstehst du das nicht.' : 'Alles wird schwarz …'; blk.classList.add('on');
+      setTimeout(() => {
+        S.T += 60; teleport('ground', AREAS.ground.spawn); S.caughtLock = false;
+        say('Du kommst zu dir. Dein Herz rast. Du liegst wieder im Schlafzimmer – wie viel Zeit ist vergangen?', 'chg');
+        blk.classList.remove('on');
+      }, 2000);
+    }, 650);
+  }
+  const FIG = '<svg viewBox="0 0 100 260" xmlns="http://www.w3.org/2000/svg"><g fill="#000"><ellipse cx="50" cy="38" rx="19" ry="27"/><path d="M43 62h14l6 60 12 108h-8l-10-80-3 80h-8l-3-80-10 80h-8l12-108z"/><path d="M41 78 6 196l7 4 34-98zM59 78l35 118-7 4-34-98z"/></g><ellipse cx="42" cy="36" rx="4" ry="8" fill="#fff"/><ellipse cx="58" cy="36" rx="4" ry="8" fill="#fff"/></svg>';
+
+  // ---- Angst ----
+  function fear() {
+    if (!S || S.over) return 0;
+    let f = Math.min(.5, S.T / TOTAL * .5);
+    if (G.mode !== 'away' && G.area === areaOf(P.x)) { const d = Math.hypot(G.x - P.x, G.z - P.z); f += clamp((14 - d) / 12, 0, 1) * .75; }
+    return Math.min(1, f);
+  }
+  function applyFear() {
+    const f = fear(); fearV = f;
+    document.documentElement.style.setProperty('--fear', f.toFixed(2)); document.documentElement.style.setProperty('--beat', (1.3 - f * .85).toFixed(2) + 's');
+    if (AC) { const t = AC.currentTime; droneG.gain.setTargetAtTime(S && S.over ? .015 : .05 + f * .09, t, .5); lp.frequency.setTargetAtTime(120 + f * 320, t, .5); windG.gain.setTargetAtTime(.02 + f * .03, t, .5); }
+  }
+
+  // =====================================================================
+  // Eingabe
+  // =====================================================================
+  function lockPointer() { if (!TOUCH && !noLock && cv.requestPointerLock) { try { const r = cv.requestPointerLock(); if (r && r.catch) r.catch(() => { noLock = true; }); } catch (e) { noLock = true; } } }
+  document.addEventListener('pointerlockchange', () => { lockOK = document.pointerLockElement === cv; $('pause').classList.toggle('hidden', lockOK || !playing || TOUCH || noLock || S.over || !modalEl.classList.contains('hidden')); });
+  document.addEventListener('pointerlockerror', () => { noLock = true; $('pause').classList.add('hidden'); });
+  $('pause').addEventListener('click', () => lockPointer());
+  document.addEventListener('visibilitychange', () => { tabHidden = document.hidden; });
+  cv.addEventListener('click', () => { if (!playing) return; if (!TOUCH && !noLock && !lockOK) lockPointer(); else if (!TOUCH) interact(); });
+  addEventListener('mousemove', e => {
+    if (!playing || isPaused() && !noLock) return;
+    if (lockOK || (noLock && e.buttons)) { P.yaw -= e.movementX * .0022; P.pitch = clamp(P.pitch - e.movementY * .0022, -1.45, 1.45); }
+  });
+  addEventListener('keydown', e => {
+    const k = e.key.toLowerCase(); keys[k] = true;
+    if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k)) e.preventDefault();
+    if (!playing) return;
+    if (k === 'e') interact();
+    else if (k === 'f') toggleLight();
+    else if (k === 'm') toggleMute();
+    else if (k === 'escape' && !modalEl.classList.contains('hidden')) closeModal();
+  });
+  addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+  addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+
+  // Touch
+  if (TOUCH) {
+    const stick = $('stick'), knob = $('knob'); let sId = null, lId = null, sx = 0, sy = 0, lx = 0, ly = 0;
+    addEventListener('touchstart', e => {
+      for (const t of e.changedTouches) {
+        if (t.target.closest('.tb,.box,#hud,#inv,#mute,button')) continue;
+        if (t.clientX < innerWidth * .45 && sId === null) { sId = t.identifier; sx = t.clientX; sy = t.clientY; }
+        else if (lId === null) { lId = t.identifier; lx = t.clientX; ly = t.clientY; }
+      }
+    }, { passive: true });
+    addEventListener('touchmove', e => {
+      for (const t of e.changedTouches) {
+        if (t.identifier === sId) { const dx = clamp((t.clientX - sx) / 55, -1, 1), dy = clamp((t.clientY - sy) / 55, -1, 1); touchMove = { x: dx, y: dy }; knob.style.transform = `translate(${dx * 36}px,${dy * 36}px)`; }
+        else if (t.identifier === lId && playing && !isPaused()) { P.yaw -= (t.clientX - lx) * .0058; P.pitch = clamp(P.pitch - (t.clientY - ly) * .0058, -1.45, 1.45); lx = t.clientX; ly = t.clientY; }
+      }
+    }, { passive: true });
+    const end = e => { for (const t of e.changedTouches) { if (t.identifier === sId) { sId = null; touchMove = { x: 0, y: 0 }; knob.style.transform = ''; } if (t.identifier === lId) lId = null; } };
+    addEventListener('touchend', end, { passive: true }); addEventListener('touchcancel', end, { passive: true });
+    $('tE').addEventListener('touchstart', e => { e.preventDefault(); interact(); });
+    $('tF').addEventListener('touchstart', e => { e.preventDefault(); toggleLight(); });
+    $('tR').addEventListener('touchstart', e => { e.preventDefault(); touchRun = !touchRun; $('tR').style.background = touchRun ? 'rgba(96,165,250,.45)' : ''; });
+  }
+
+  // =====================================================================
+  // Hauptschleife
+  // =====================================================================
+  const ray = new THREE.Raycaster(), center = new THREE.Vector2(0, 0);
+  let curIA = null, lastRoom = '', beatT = 0, nextLO = 40, nextEyesLO = 0, lo = 0, flick = 0;
+  function blocked(x, z) { const r = .28; for (const w of walls) if (w.on && x + r > w.x1 && x - r < w.x2 && z + r > w.z1 && z - r < w.z2) return true; return false; }
+  function interact() {
+    if (!playing || isPaused() || busy) return;
+    if (S.hidden) { if (S.hidden.t > 1.2) unhide(); return; }
+    if (curIA) { sfx.click(); curIA.run(); }
+  }
+  function enterRoom(r) {
+    for (const c of CHANGES) if (c.room === r && c.state === 1) { c.state = 2; S.ver[r] = c.v; say('⚠ ' + c.text, 'chg'); sfx.creak(); document.body.animate([{ filter: 'hue-rotate(90deg) saturate(2)' }, { filter: 'none' }], { duration: 600 }); }
+  }
+  function update(dt) {
+    S.T += dt;
+    const room = roomOf(P.x, P.z);
+    // Veränderungen
+    for (const c of CHANGES) {
+      if (c.state === 0 && S.T >= c.at && room !== c.room) { c.apply(); c.state = 1; }
+    }
+    if (room !== lastRoom) { lastRoom = room; enterRoom(room); }
+    for (const ev of EVENTS) if (!S.fired[ev.at] && S.T >= ev.at) { S.fired[ev.at] = 1; say(ev.t, 'ev'); ev.s && ev.s(); }
+    if (S.T >= TOTAL) { ending('behaelt'); return; }
+
+    // Bewegung
+    if (S.hidden) { S.hidden.t += dt; camera.position.y = 1.0; if (S.hidden.t > 40) unhide(); }
+    else if (!busy && !S.caughtLock) {
+      let mx = (keys.d || keys.arrowright ? 1 : 0) - (keys.a || keys.arrowleft ? 1 : 0) + touchMove.x;
+      let mz = (keys.w || keys.arrowup ? 1 : 0) - (keys.s || keys.arrowdown ? 1 : 0) - touchMove.y;
+      const l = Math.hypot(mx, mz); if (l > 1) { mx /= l; mz /= l; }
+      const wantRun = (keys.shift || touchRun) && l > .1;
+      const run = wantRun && P.stamina > (P.exhausted ? .25 : .02);
+      if (P.stamina <= .02) P.exhausted = true; if (P.stamina > .25) P.exhausted = false;
+      P.stamina = clamp(P.stamina + (run ? -.2 : .13) * dt, 0, 1);
+      const sp = (run ? 5 : 2.9) * (S.lightOn ? 1 : 1);
+      const dx = (Math.cos(P.yaw) * mx - Math.sin(P.yaw) * mz) * sp * dt, dz = (-Math.sin(P.yaw) * mx - Math.cos(P.yaw) * mz) * sp * dt;
+      if (!blocked(P.x + dx, P.z)) P.x += dx; if (!blocked(P.x, P.z + dz)) P.z += dz;
+      if (l > .1) { P.bob += dt * (run ? 11 : 7); P.fs -= dt * (run ? 11 : 7); if (P.fs <= 0) { P.fs = Math.PI; sfx.step(run ? 1.6 : .9); } }
+      camera.position.y = 1.62 + Math.sin(P.bob) * (l > .1 ? .035 : 0);
+    }
+    camera.position.x = P.x; camera.position.z = P.z; camera.rotation.y = P.yaw; camera.rotation.x = P.pitch;
+
+    // Taschenlampe
+    if (S.lightOn) { S.battery = Math.max(0, S.battery - dt * .0036); if (S.battery <= 0) { setLight(false); say('Die Batterie ist leer.', 'ev scary'); } }
+    torch.intensity = S.lightOn ? (S.battery < .15 ? 1.2 + Math.random() * 1.0 : 2.2) : 0;
+
+    // Telefon klingelt
+    if (FL.phoneRing && !S.flags.phone) { FL.ringT = (FL.ringT || 0) - dt; if (FL.ringT <= 0 && areaOf(P.x) === 'ground') { FL.ringT = 3.2; sfx.ring(); } }
+    if (KI.autoMusic && room === 'kinder') { KI.mT = (KI.mT || 0) - dt; if (KI.mT <= 0) { KI.mT = 25; sfx.music(); } }
+    if (KI.rock) KI.horse.rotation.x = Math.sin(S.T * 2) * .18;
+    DA.chair.rotation.x = Math.sin(S.T * 1.3) * .05;
+
+    gestaltUpdate(dt);
+
+    // Interaktion zielen
+    curIA = null; camera.updateMatrixWorld();
+    if (!S.hidden && !busy) {
+      ray.setFromCamera(center, camera); ray.far = 2.8;
+      const hit = ray.intersectObjects(rayT, false)[0];
+      if (hit && hit.object.userData.ia) curIA = hit.object.userData.ia;
+    }
+    const pr = $('prompt');
+    if (S.hidden) pr.textContent = S.hidden.t > 1.2 ? 'E · Hervorkommen' : '';
+    else pr.textContent = curIA ? 'E · ' + (typeof curIA.label === 'function' ? curIA.label() : curIA.label) : '';
+    $('cross').classList.toggle('act', !!curIA);
+
+    // Animationen & Effekte
+    for (let i = anims.length - 1; i >= 0; i--) if (anims[i](dt)) anims.splice(i, 1);
+    applyFear();
+    updateEffects(dt);
+    // HUD
+    const m = Math.floor(1380 + S.T / TOTAL * 247) % 1440;
+    $('clock').textContent = '🕰 ' + String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+    $('clock').classList.toggle('late', S.T > TOTAL * .75);
+    $('bBat').style.width = (S.battery * 100) + '%'; $('bBatW').classList.toggle('low', S.battery < .2);
+    $('bSta').style.width = (P.stamina * 100) + '%';
+  }
+
+  function updateEffects(dt) {
+    shake = Math.max(0, shake - dt);
+    if (shake > 0) { camera.rotation.z = (Math.random() - .5) * shake * .1; } else camera.rotation.z = 0;
+    // Lichtflackern
+    const f = fearV; flick -= dt;
+    const area = areaOf(P.x), ls = areaLights[area];
+    nextLO -= dt;
+    if (nextLO <= 0 && !S.hidden) { lo = rnd(.3, .7); nextLO = rnd(28, 50) - f * 12; snd(90, .3, 'sawtooth', .1, -40);
+      if (f > .4 && G.mode === 'away' && Math.random() < .7) { phantom = 1.1; } }
+    lo = Math.max(0, lo - dt);
+    const blackout = lo > 0;
+    ls.forEach((l, i) => { l.intensity = blackout ? 0 : l.userData.base * (1 + (Math.sin(S.T * (3 + i) + i * 7) + Math.sin(S.T * 11.3 + i)) * .06 * (1 + f * 3) + (Math.random() < f * .03 ? -.5 : 0)); });
+    amb.intensity = blackout ? 0 : AREAS[area].amb;
+    scene.fog.density = AREAS[area].fog * (1 + f * .45);
+    // Phantom: kurz sichtbare Gestalt im Stromausfall-Flackern
+    if (phantom > 0) {
+      phantom -= dt;
+      if (!G.mesh.visible || G.mode === 'away') {
+        const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw);
+        G.mesh.position.set(P.x + fx * 4.5, 0, P.z + fz * 4.5); G.mesh.rotation.y = Math.atan2(-fx, -fz);
+        G.mesh.visible = !blackout && phantom > 0 && phantom < .8;
+        if (G.mesh.visible && !phantomSnd) { phantomSnd = true; noise(.4, 700, 1, .15); }
+      }
+      if (phantom <= 0 && G.mode === 'away') { G.mesh.visible = false; phantomSnd = false; }
+    }
+    // Zufalls-Geräusche
+    if (f > .3 && Math.random() < .05 * dt * 20 / 20) sfx.whisper();
+    if (f > .5 && Math.random() < .03 * dt) sfx.creak();
+  }
+  let phantom = 0, phantomSnd = false;
+
+  // Filmkorn
+  const gc = $('grain'), gx = gc.getContext('2d'); gc.width = 160; gc.height = 100; const gimg = gx.createImageData(160, 100);
+  setInterval(() => { const d = gimg.data; for (let i = 0; i < d.length; i += 4) { d[i] = d[i + 1] = d[i + 2] = Math.random() * 255; d[i + 3] = 255; } gx.putImageData(gimg, 0, 0); }, 120);
+
+  let lastT = performance.now();
+  function frame(now) {
+    requestAnimationFrame(frame);
+    const dt = Math.min(.05, (now - lastT) / 1000); lastT = now;
+    if (S && playing && !isPaused()) update(dt);
+    renderer.render(scene, camera);
+  }
+
+  // =====================================================================
+  // Start
+  // =====================================================================
+  function newGame() {
+    S = { T: 0, inv: {}, flags: {}, lives: 3, battery: 0, lightOn: false, over: false, ver: { wohn: 0, kueche: 0, bad: 0, schlaf: 0, kinder: 0 }, fired: {}, hidden: null, caughtLock: false, code: [0, 0, 0] };
+    torch.visible = false; G.mode = 'away'; G.timer = 50; G.mesh.visible = false; G.warned1 = false;
+    Object.values(HIDE).forEach(h => { h.burn = 0; });
+    doors.keller.open = false; doors.keller.col.on = true; doors.keller.pivot.rotation.y = 0;
+    CHANGES.forEach(c => { c.state = 0; });
+    WZ.drawP(0); WZ.ptex.needsUpdate = true; WZ.win.redraw(false); SZ.win.redraw(false); BA.draw(0); BA.tex.needsUpdate = true;
+    SZ.teddy.visible = false; SZ.hollow2.visible = false; KU.plates.visible = false; KU.chairs.forEach((c, i) => { c.rotation.z = 0; c.position.y = 0; });
+    FL.phoneRing = false; KI.rock = false; KI.autoMusic = false; KI.horse.rotation.x = 0;
+    P.stamina = 1; P.exhausted = false; busy = false; lastRoom = ''; phantom = 0; lo = 0; nextLO = 40; shake = 0;
+    teleport('ground', AREAS.ground.spawn); camera.position.y = 1.62;
+    subEl.innerHTML = ''; hud(); fearV = 0; clearTimeout(beatTimer); beatLoop();
+    say('Du wachst auf. Staub in der Nase, Kälte in den Knochen. Das Letzte, woran du dich erinnerst, ist ein Regenabend, eine Landstraße und ein Haus, in dem noch Licht brannte. Jetzt ist es dunkel – und still.');
+    setTimeout(() => S && !S.over && say('<i>Das Schlafzimmer. Eine Tür führt in den Flur. Sieh dich um – und finde einen Weg hinaus.</i>', 'ev'), 6500);
+    playing = true;
+  }
+  $('found').textContent = loadEnds().length ? `Enden entdeckt: ${loadEnds().length} von ${Object.keys(ENDS).length}` : '';
+  $('startBtn').onclick = () => { audioInit(); $('title').classList.add('hidden'); newGame(); sfx.creak(); lockPointer(); };
+  requestAnimationFrame(frame);
+  // Titelbild: Kamera schaut langsam durch das Schlafzimmer
+  teleport('ground', AREAS.ground.spawn); camera.position.set(P.x, 1.62, P.z);
+
+  if (DEBUG) window.HAUS = {
+    get S() { return S; }, P, G, camera, IA, doors, HIDE, walls,
+    tp: (x, z, yaw = 0, pitch = 0) => { P.x = x; P.z = z; P.yaw = yaw; P.pitch = pitch; const a = areaOf(x); teleport(a, { x, z, yaw }); },
+    use: label => { const e = IA.find(i => String(i.label).includes(label)); if (!e) return 'none:' + label; e.run(); return 'ok'; },
+    setT: v => { S.T = v; }, area: () => areaOf(P.x), room: () => roomOf(P.x, P.z), curIA: () => curIA && curIA.label,
+    step: n => { for (let i = 0; i < n; i++) update(1 / 30); }, ending, caught, spawnG, hideIn, unhide, give
+  };
+})();
+</script>
+</body>
+</html>
