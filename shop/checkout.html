@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Kasse – Glass Skin Shop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff; --side:#fbf4f4; --line:#e3d6d8; --ink:#1c1b1d; --muted:#6f6469;
+  --rose:#b0657a; --rose-d:#964f64; --err:#c4314b; --ok:#2e7d5b;
+  --serif:"Playfair Display",Georgia,serif; --sans:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+body{font-family:var(--sans);color:var(--ink);background:var(--bg);line-height:1.5;font-size:14.5px;-webkit-font-smoothing:antialiased}
+a{color:var(--rose)}
+button{font:inherit;cursor:pointer}
+
+.testbar{background:#fff4d6;border-bottom:1px solid #ecd48a;color:#5c4510;font-size:.8rem;padding:8px 16px;text-align:center}
+.testbar b{font-weight:600}
+.testbar button{margin-left:10px;border:1px solid #c9a545;background:#fff;border-radius:6px;padding:3px 10px;font-size:.78rem;color:#5c4510}
+.testbar button:hover{background:#fff9e8}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.82fr);min-height:100vh}
+.main{display:flex;justify-content:flex-end;padding:0 56px 48px 20px}
+.side{background:var(--side);border-left:1px solid var(--line);padding:0 20px 48px 48px}
+.col{width:100%;max-width:560px}
+.side .col{max-width:430px}
+
+.head{padding:28px 0 18px}
+.logo{font-family:var(--serif);font-weight:700;font-size:1.55rem;text-decoration:none;color:var(--ink)}
+.logo span{color:var(--rose)}
+.crumbs{display:flex;flex-wrap:wrap;gap:6px;font-size:.78rem;margin-top:12px;color:var(--muted)}
+.crumbs a{text-decoration:none}
+.crumbs .on{color:var(--ink);font-weight:600}
+.crumbs i{font-style:normal;opacity:.5}
+
+h2{font-size:1.1rem;font-weight:600;margin:28px 0 12px}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.row small{font-size:.8rem;color:var(--muted)}
+
+/* Felder mit schwebendem Label */
+.f{position:relative;margin-bottom:12px}
+.f input,.f select{width:100%;font:inherit;font-size:.95rem;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:6px;padding:22px 12px 7px;height:54px;appearance:none;outline:none;transition:.12s}
+.f select{padding-top:24px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%236f6469' stroke-width='1.6'%3E%3Cpath d='M1 1.5 6 6.5l5-5'/%3E%3C/svg%3E") no-repeat right 14px center}
+.f label{position:absolute;left:13px;top:17px;font-size:.95rem;color:var(--muted);pointer-events:none;transition:.12s;transform-origin:left top}
+.f input:focus,.f select:focus{border-color:var(--rose);box-shadow:0 0 0 1px var(--rose)}
+.f input:not(:placeholder-shown)+label,.f input:focus+label,.f select+label{transform:translateY(-10px) scale(.78)}
+.f.bad input,.f.bad select{border-color:var(--err);box-shadow:0 0 0 1px var(--err)}
+.err{display:none;color:var(--err);font-size:.78rem;margin:-6px 0 10px 2px}
+.f.bad+.err,.err.show{display:block}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.grid3{display:grid;grid-template-columns:1fr 2fr;gap:0 12px}
+
+.check{display:flex;gap:10px;align-items:flex-start;font-size:.88rem;margin:8px 0;cursor:pointer}
+.check input{width:17px;height:17px;margin-top:2px;accent-color:var(--rose);flex:none}
+.check.bad{color:var(--err)}
+
+/* Auswahl-Boxen (Versand / Zahlung) */
+.opts{border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.opt{display:block;border-bottom:1px solid var(--line);background:#fff;cursor:pointer}
+.opt:last-child{border-bottom:0}
+.opt .top{display:flex;align-items:center;gap:12px;padding:14px 14px}
+.opt input[type=radio]{accent-color:var(--rose);width:17px;height:17px;flex:none}
+.opt .t{flex:1}
+.opt .t small{display:block;color:var(--muted);font-size:.78rem}
+.opt.sel{background:#fdf6f7;box-shadow:inset 0 0 0 1.5px var(--rose);position:relative}
+.panel{display:none;background:var(--side);border-top:1px solid var(--line);padding:16px 14px 6px}
+.opt.sel .panel{display:block}
+.badges{display:flex;gap:5px}
+.badge{border:1px solid var(--line);border-radius:4px;background:#fff;font-size:.62rem;font-weight:700;letter-spacing:.04em;padding:3px 6px;color:#555;white-space:nowrap}
+.lock{font-size:.78rem;color:var(--muted);margin:-2px 0 10px}
+.note{font-size:.82rem;color:var(--muted);padding-bottom:10px}
+
+.pay{width:100%;margin-top:24px;border:0;border-radius:6px;background:var(--rose);color:#fff;font-weight:600;font-size:1.02rem;padding:18px;transition:.15s}
+.pay:hover{background:var(--rose-d)}
+.pay:disabled{opacity:.7;cursor:progress}
+.legal{display:flex;flex-wrap:wrap;gap:14px;font-size:.78rem;border-top:1px solid var(--line);margin-top:34px;padding-top:16px}
+.legal a{color:var(--muted)}
+.formerr{display:none;background:#fdecef;border:1px solid #f1b9c3;color:var(--err);border-radius:6px;padding:10px 12px;font-size:.85rem;margin-top:16px}
+.formerr.show{display:block}
+
+/* Bestellübersicht */
+.mobsum{display:none}
+.item{display:flex;gap:14px;align-items:center;margin:28px 0 18px}
+.thumb{position:relative;width:66px;height:66px;border-radius:8px;border:1px solid var(--line);background:#fff;flex:none}
+.thumb img{width:100%;height:100%;object-fit:cover;border-radius:7px}
+.thumb b{position:absolute;top:-8px;right:-8px;min-width:22px;height:22px;border-radius:99px;background:rgba(60,50,55,.85);color:#fff;font-size:.75rem;display:grid;place-items:center;padding:0 5px}
+.item .n{flex:1;font-weight:500;font-size:.92rem;line-height:1.3}
+.item .n small{display:block;color:var(--muted);font-weight:400;font-size:.8rem}
+.disc{display:flex;gap:10px;margin-bottom:6px}
+.disc .f{flex:1;margin:0}
+.disc button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:0 20px;font-weight:600;color:var(--muted)}
+.disc button:hover{background:#f5ecee}
+.disc button.on{background:var(--rose);color:#fff;border-color:var(--rose)}
+.dmsg{font-size:.8rem;margin:2px 0 12px;min-height:1.2em}
+.dmsg.ok{color:var(--ok)}.dmsg.no{color:var(--err)}
+.sum .row{margin:8px 0;font-size:.92rem}
+.sum .total{border-top:1px solid var(--line);margin-top:14px;padding-top:16px}
+.sum .total b{font-size:1.5rem;font-weight:600}
+.sum .total em{font-style:normal;color:var(--muted);font-size:.78rem;margin-right:6px}
+.vat{font-size:.78rem;color:var(--muted);text-align:right;margin-top:-6px}
+
+.overlay{position:fixed;inset:0;background:rgba(255,255,255,.88);display:none;place-items:center;z-index:50;text-align:center}
+.overlay.show{display:grid}
+.spin{width:44px;height:44px;border:4px solid var(--line);border-top-color:var(--rose);border-radius:50%;animation:s .8s linear infinite;margin:0 auto 14px}
+@keyframes s{to{transform:rotate(360deg)}}
+
+.empty{max-width:420px;margin:18vh auto;text-align:center;padding:0 20px}
+.empty a{display:inline-block;margin-top:14px;background:var(--rose);color:#fff;text-decoration:none;font-weight:600;border-radius:6px;padding:13px 24px}
+
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .side{display:none;border:0;border-bottom:1px solid var(--line);padding:0 20px 20px}
+  .side.open{display:block}
+  .side .col,.col{max-width:none}
+  .main{padding:0 20px 40px;justify-content:center}
+  .mobsum{display:flex;justify-content:space-between;width:100%;padding:14px 20px;background:var(--side);border:0;border-bottom:1px solid var(--line);color:var(--rose);font-size:.9rem;text-align:left}
+  .mobsum b{color:var(--ink);font-size:1.05rem}
+  .order{display:flex;flex-direction:column}
+}
+@media(max-width:480px){.grid2,.grid3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="testbar"><b>Test-Checkout:</b> Es wird nichts bezahlt, nichts gesendet und nichts gespeichert. Kartennummer z. B. <b>4242 4242 4242 4242</b>. <button type="button" id="fill">Testdaten einfügen</button></div>
+
+<div id="empty" class="empty" hidden>
+  <div style="font-size:2.6rem">🍑</div>
+  <h2 style="margin-top:8px">Dein Warenkorb ist leer</h2>
+  <p style="color:var(--muted)">Lege zuerst etwas in den Warenkorb, dann geht es hier weiter.</p>
+  <a href="/shop/">Zurück zum Shop</a>
+</div>
+
+<div id="app">
+  <button type="button" class="mobsum" id="mobsum" aria-expanded="false"><span>🛍 Bestellübersicht anzeigen ▾</span><b id="mobTotal"></b></button>
+  <div class="layout">
+    <main class="main"><div class="col">
+      <div class="head">
+        <a class="logo" href="/shop/">Glass<span>Skin</span> Shop</a>
+        <nav class="crumbs" aria-label="Fortschritt"><a href="/shop/">Warenkorb</a><i>›</i><span class="on">Kasse</span><i>›</i><span>Bestätigung</span></nav>
+      </div>
+
+      <form id="co" novalidate autocomplete="on">
+        <div class="row" style="margin-top:6px"><h2 style="margin-top:0">Kontakt</h2><small>Schon Kundin? <a href="#" onclick="return false">Anmelden</a></small></div>
+        <div class="f"><input id="email" name="email" type="email" placeholder=" " autocomplete="email" inputmode="email"><label for="email">E-Mail</label></div><div class="err">Bitte gib eine gültige E-Mail-Adresse ein.</div>
+        <label class="check"><input type="checkbox" id="news"> Neuigkeiten und Angebote per E-Mail erhalten</label>
+
+        <h2>Lieferadresse</h2>
+        <div class="f"><select id="country" autocomplete="country"><option value="DE">Deutschland</option><option value="AT">Österreich</option><option value="CH">Schweiz</option></select><label for="country">Land/Region</label></div>
+        <div class="grid2">
+          <div><div class="f"><input id="fn" placeholder=" " autocomplete="given-name"><label for="fn">Vorname</label></div><div class="err">Bitte gib deinen Vornamen ein.</div></div>
+          <div><div class="f"><input id="ln" placeholder=" " autocomplete="family-name"><label for="ln">Nachname</label></div><div class="err">Bitte gib deinen Nachnamen ein.</div></div>
+        </div>
+        <div class="f"><input id="street" placeholder=" " autocomplete="address-line1"><label for="street">Straße und Hausnummer</label></div><div class="err">Bitte gib deine Adresse ein.</div>
+        <div class="f"><input id="addr2" placeholder=" " autocomplete="address-line2"><label for="addr2">Adresszusatz (optional)</label></div>
+        <div class="grid3">
+          <div><div class="f"><input id="zip" placeholder=" " autocomplete="postal-code" inputmode="numeric" maxlength="5"><label for="zip">PLZ</label></div><div class="err">Bitte gib eine gültige PLZ ein.</div></div>
+          <div><div class="f"><input id="city" placeholder=" " autocomplete="address-level2"><label for="city">Ort</label></div><div class="err">Bitte gib deinen Ort ein.</div></div>
+        </div>
+        <div class="f"><input id="phone" type="tel" placeholder=" " autocomplete="tel"><label for="phone">Telefon (optional)</label></div>
+
+        <h2>Versandart</h2>
+        <div class="opts" id="shipOpts">
+          <label class="opt sel"><span class="top"><input type="radio" name="ship" value="std" checked><span class="t">Standardversand<small>2–4 Werktage</small></span><span id="stdPrice">3,90 €</span></span></label>
+          <label class="opt"><span class="top"><input type="radio" name="ship" value="exp"><span class="t">Expressversand<small>1–2 Werktage</small></span><span>6,90 €</span></span></label>
+        </div>
+
+        <h2>Zahlung</h2>
+        <p class="lock">🔒 Alle Transaktionen sind verschlüsselt und sicher.</p>
+        <div class="opts" id="payOpts">
+          <label class="opt sel" data-m="card"><span class="top"><input type="radio" name="pay" value="card" checked><span class="t">Kreditkarte</span><span class="badges"><span class="badge">VISA</span><span class="badge">MASTERCARD</span><span class="badge">AMEX</span></span></span>
+            <span class="panel">
+              <span class="f" style="display:block"><input id="cc" placeholder=" " autocomplete="cc-number" inputmode="numeric" maxlength="23"><label for="cc">Kartennummer</label></span><span class="err">Bitte gib eine gültige Kartennummer ein.</span>
+              <span class="grid2" style="display:grid">
+                <span><span class="f" style="display:block"><input id="exp" placeholder=" " autocomplete="cc-exp" inputmode="numeric" maxlength="7"><label for="exp">Ablaufdatum (MM / JJ)</label></span><span class="err">Ungültiges Ablaufdatum.</span></span>
+                <span><span class="f" style="display:block"><input id="cvc" placeholder=" " autocomplete="cc-csc" inputmode="numeric" maxlength="4"><label for="cvc">Sicherheitscode</label></span><span class="err">Ungültiger Code.</span></span>
+              </span>
+              <span class="f" style="display:block"><input id="holder" placeholder=" " autocomplete="cc-name"><label for="holder">Name auf der Karte</label></span><span class="err">Bitte gib den Namen auf der Karte ein.</span>
+            </span></label>
+          <label class="opt" data-m="paypal"><span class="top"><input type="radio" name="pay" value="paypal"><span class="t">PayPal</span><span class="badges"><span class="badge">PayPal</span></span></span><span class="panel"><span class="note" style="display:block">Nach „Jetzt bezahlen" würdest du zu deinem PayPal-Konto weitergeleitet. Im Test passiert das nicht.</span></span></label>
+          <label class="opt" data-m="klarna"><span class="top"><input type="radio" name="pay" value="klarna"><span class="t">Rechnung<small>Zahle in 30 Tagen</small></span><span class="badges"><span class="badge">Klarna</span></span></span><span class="panel"><span class="note" style="display:block">Du erhältst die Rechnung per E-Mail und zahlst bequem nach Erhalt der Ware. Im Test wird keine Bonitätsprüfung durchgeführt.</span></span></label>
+          <label class="opt" data-m="sepa"><span class="top"><input type="radio" name="pay" value="sepa"><span class="t">SEPA-Lastschrift</span><span class="badges"><span class="badge">SEPA</span></span></span>
+            <span class="panel"><span class="f" style="display:block"><input id="iban" placeholder=" " autocomplete="off"><label for="iban">IBAN</label></span><span class="err">Bitte gib eine gültige IBAN ein.</span></span></label>
+        </div>
+
+        <h2>Rechnungsadresse</h2>
+        <div class="opts"><label class="opt sel" style="cursor:default"><span class="top"><input type="checkbox" id="sameAddr" checked><span class="t">Identisch mit der Lieferadresse</span></span></label></div>
+
+        <label class="check" id="agbWrap" style="margin-top:20px"><input type="checkbox" id="agb"><span>Ich habe die <a href="#" onclick="return false">AGB</a>, die <a href="#" onclick="return false">Widerrufsbelehrung</a> und die <a href="#" onclick="return false">Datenschutzerklärung</a> gelesen und bin einverstanden.</span></label>
+
+        <div class="formerr" id="formerr" role="alert">Bitte prüfe die markierten Felder.</div>
+        <button class="pay" id="pay" type="submit">Jetzt zahlungspflichtig bestellen · <span id="payTotal"></span></button>
+
+        <div class="legal"><a href="#" onclick="return false">Widerrufsbelehrung</a><a href="#" onclick="return false">Versand</a><a href="#" onclick="return false">Datenschutz</a><a href="#" onclick="return false">AGB</a><a href="#" onclick="return false">Impressum</a></div>
+      </form>
+    </div></main>
+
+    <aside class="side" id="side"><div class="col order">
+      <div class="item">
+        <div class="thumb"><img src="/shop/serum-produkt.jpg" alt=""><b id="qtyBadge">1</b></div>
+        <div class="n">Anua Peach 70 Niacin Serum<small>30 ml</small></div>
+        <div id="linePrice" style="font-weight:500"></div>
+      </div>
+      <div class="disc"><div class="f"><input id="code" placeholder=" " autocomplete="off"><label for="code">Rabattcode</label></div><button type="button" id="applyCode">Einlösen</button></div>
+      <div class="dmsg" id="dmsg"></div>
+      <div class="sum">
+        <div class="row"><span>Zwischensumme</span><span id="sSub"></span></div>
+        <div class="row" id="rDisc" hidden><span>Rabatt <small id="dName"></small></span><span id="sDisc" style="color:var(--ok)"></span></div>
+        <div class="row"><span>Versand</span><span id="sShip"></span></div>
+        <div class="row total"><b>Gesamt</b><span><em>EUR</em><b id="sTotal"></b></span></div>
+        <div class="vat" id="vat"></div>
+      </div>
+    </div></aside>
+  </div>
+</div>
+
+<div class="overlay" id="busy"><div><div class="spin"></div><b>Deine Bestellung wird verarbeitet …</b><p style="color:var(--muted);font-size:.85rem">Bitte schließe dieses Fenster nicht.</p></div></div>
+
+<script>
+(function(){
+  /* Test-Checkout: reine Attrappe. Es gibt keine Anfrage an einen Server, Kartendaten werden nie gespeichert. */
+  var PRICE=2190, FREE_FROM=4000, SHIP_STD=390, SHIP_EXP=690, CODES={GLOW10:{pct:10,name:'GLOW10'}};
+  var CART_KEY='gs-cart-v1', ORDER_KEY='gs-order-v1';
+  var $=function(s){return document.querySelector(s)}, $$=function(s){return [].slice.call(document.querySelectorAll(s))};
+  var eur=function(c){return (c/100).toFixed(2).replace('.',',')+' €'};
+
+  var qty=0;
+  try{ var c=JSON.parse(localStorage.getItem(CART_KEY)); qty=c&&Number(c.qty)>0?Math.min(10,Math.floor(c.qty)):0; }catch(e){}
+  if(!qty){ $('#app').hidden=true; $('#empty').hidden=false; $('.testbar #fill').hidden=true; return; }
+
+  var disc=null;
+  function calc(){
+    var sub=qty*PRICE, d=disc?Math.round(sub*disc.pct/100):0;
+    var ship=$('input[name=ship]:checked').value==='exp'?SHIP_EXP:(sub>=FREE_FROM?0:SHIP_STD);
+    return {sub:sub,disc:d,ship:ship,total:sub-d+ship};
+  }
+  function render(){
+    var t=calc();
+    $('#qtyBadge').textContent=qty; $('#linePrice').textContent=eur(t.sub);
+    $('#sSub').textContent=eur(t.sub);
+    $('#rDisc').hidden=!t.disc; if(t.disc){ $('#sDisc').textContent='−'+eur(t.disc); $('#dName').textContent=disc.name; }
+    $('#sShip').textContent=t.ship?eur(t.ship):'Gratis';
+    $('#stdPrice').textContent=qty*PRICE>=FREE_FROM?'Gratis':eur(SHIP_STD);
+    $('#sTotal').textContent=eur(t.total); $('#payTotal').textContent=eur(t.total); $('#mobTotal').textContent=eur(t.total);
+    $('#vat').textContent='inkl. '+eur(Math.round(t.total*19/119))+' MwSt.';
+  }
+
+  /* Auswahlboxen */
+  function syncOpts(groupSel){
+    $$(groupSel+' .opt').forEach(function(o){ var r=o.querySelector('input[type=radio]'); if(r) o.classList.toggle('sel',r.checked); });
+  }
+  $('#shipOpts').addEventListener('change',function(){syncOpts('#shipOpts');render()});
+  $('#payOpts').addEventListener('change',function(){syncOpts('#payOpts')});
+  $('#mobsum').onclick=function(){ var o=$('#side').classList.toggle('open'); this.setAttribute('aria-expanded',o); };
+
+  /* Rabattcode */
+  $('#applyCode').onclick=function(){
+    var v=$('#code').value.trim().toUpperCase(), m=$('#dmsg');
+    if(disc){ disc=null; $('#code').value=''; this.textContent='Einlösen'; this.classList.remove('on'); m.textContent=''; render(); return; }
+    if(CODES[v]){ disc=CODES[v]; m.textContent='✓ Code „'+v+'" eingelöst: '+disc.pct+' % Rabatt'; m.className='dmsg ok'; this.textContent='Entfernen'; this.classList.add('on'); }
+    else { m.textContent=v?'Dieser Rabattcode ist ungültig.':'Bitte gib einen Rabattcode ein.'; m.className='dmsg no'; }
+    render();
+  };
+  $('#code').addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); $('#applyCode').click(); } });
+
+  /* Eingabe-Formatierung */
+  $('#cc').addEventListener('input',function(){ var d=this.value.replace(/\D/g,'').slice(0,19); this.value=d.replace(/(.{4})/g,'$1 ').trim(); });
+  $('#exp').addEventListener('input',function(e){
+    var d=this.value.replace(/\D/g,'').slice(0,4);
+    if(d.length===1&&+d>1) d='0'+d;
+    this.value=d.length>2?d.slice(0,2)+' / '+d.slice(2):(d.length===2&&e.inputType!=='deleteContentBackward'?d+' / ':d);
+  });
+  $('#cvc').addEventListener('input',function(){ this.value=this.value.replace(/\D/g,'').slice(0,4); });
+  $('#zip').addEventListener('input',function(){ this.value=this.value.replace(/\D/g,'').slice(0,5); });
+  $('#iban').addEventListener('input',function(){ this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'').replace(/(.{4})/g,'$1 ').trim(); });
+
+  /* Validierung */
+  function luhn(n){ var s=0,alt=false; for(var i=n.length-1;i>=0;i--){ var d=+n[i]; if(alt){ d*=2; if(d>9)d-=9; } s+=d; alt=!alt; } return s%10===0; }
+  function ibanOk(v){
+    v=v.replace(/\s/g,''); if(!/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(v)) return false;
+    var r=(v.slice(4)+v.slice(0,4)).replace(/[A-Z]/g,function(c){return c.charCodeAt(0)-55}), rem=0;
+    for(var i=0;i<r.length;i++) rem=(rem*10+ +r[i])%97; return rem===1;
+  }
+  var RULES={
+    email:function(v){return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)},
+    fn:function(v){return v.trim().length>0}, ln:function(v){return v.trim().length>0},
+    street:function(v){return /\S+\s*\d|\d/.test(v)&&v.trim().length>3}, city:function(v){return v.trim().length>1},
+    zip:function(v){return /^\d{5}$/.test(v)||(['AT','CH'].indexOf($('#country').value)>-1&&/^\d{4}$/.test(v))},
+    cc:function(v){var n=v.replace(/\s/g,''); return n.length>=13&&n.length<=19&&luhn(n)},
+    exp:function(v){ var m=v.match(/^(\d{2}) \/ (\d{2})$/); if(!m||+m[1]<1||+m[1]>12) return false; var now=new Date(); return (2000+ +m[2])*12+ +m[1] >= now.getFullYear()*12+now.getMonth()+1; },
+    cvc:function(v){return /^\d{3,4}$/.test(v)}, holder:function(v){return v.trim().length>1},
+    iban:ibanOk
+  };
+  function fieldsToCheck(){
+    var f=['email','fn','ln','street','zip','city'], p=$('input[name=pay]:checked').value;
+    if(p==='card') f=f.concat(['cc','exp','cvc','holder']); if(p==='sepa') f.push('iban');
+    return f;
+  }
+  function mark(id,ok){ var el=$('#'+id), box=el.closest('.f'); box.classList.toggle('bad',!ok); var err=box.nextElementSibling; if(err&&err.classList.contains('err')) err.classList.toggle('show',!ok); }
+  Object.keys(RULES).forEach(function(id){ var el=$('#'+id); el.addEventListener('blur',function(){ if(el.value) mark(id,RULES[id](el.value)); }); el.addEventListener('input',function(){ if(el.closest('.f').classList.contains('bad')&&RULES[id](el.value)) mark(id,true); }); });
+
+  $('#co').addEventListener('submit',function(e){
+    e.preventDefault();
+    var bad=null;
+    fieldsToCheck().forEach(function(id){ var ok=RULES[id]($('#'+id).value); mark(id,ok); if(!ok&&!bad) bad=id; });
+    var agbOk=$('#agb').checked; $('#agbWrap').classList.toggle('bad',!agbOk);
+    $('#formerr').classList.toggle('show',!!bad||!agbOk);
+    $('#formerr').textContent=bad?'Bitte prüfe die markierten Felder.':'Bitte bestätige die AGB und die Widerrufsbelehrung.';
+    if(bad){ $('#'+bad).focus(); return; }
+    if(!agbOk){ $('#agb').focus(); return; }
+
+    var t=calc(), pay=$('input[name=pay]:checked').value;
+    var cardNo=$('#cc').value.replace(/\s/g,'');
+    var order={ // bewusst ohne Kartendaten
+      no:'GS-'+Math.floor(100000+Math.random()*900000), when:new Date().toISOString(),
+      qty:qty, sub:t.sub, disc:t.disc, ship:t.ship, total:t.total, shipMethod:$('input[name=ship]:checked').value,
+      email:$('#email').value.trim(), name:$('#fn').value.trim()+' '+$('#ln').value.trim(),
+      addr:[$('#street').value.trim(),$('#addr2').value.trim(),$('#zip').value+' '+$('#city').value.trim(),$('#country').selectedOptions[0].text].filter(Boolean),
+      pay:pay, payLabel:pay==='card'?'Kreditkarte •••• '+cardNo.slice(-4):({paypal:'PayPal',klarna:'Rechnung',sepa:'SEPA-Lastschrift'})[pay]
+    };
+    $('#pay').disabled=true; $('#busy').classList.add('show');
+    setTimeout(function(){
+      try{ sessionStorage.setItem(ORDER_KEY,JSON.stringify(order)); localStorage.removeItem(CART_KEY); }catch(e){}
+      location.href='/shop/bestaetigung.html';
+    },1600);
+  });
+
+  /* Testdaten */
+  $('#fill').onclick=function(){
+    var v={email:'mia.muster@example.com',fn:'Mia',ln:'Muster',street:'Musterstraße 12',zip:'10115',city:'Berlin',cc:'4242 4242 4242 4242',exp:'12 / 30',cvc:'123',holder:'Mia Muster',phone:'0151 2345678'};
+    Object.keys(v).forEach(function(k){ var el=$('#'+k); el.value=v[k]; el.dispatchEvent(new Event('input')); });
+    $('#agb').checked=true; $('#formerr').classList.remove('show'); $('#agbWrap').classList.remove('bad');
+  };
+
+  render();
+})();
+</script>
+</body>
+</html>

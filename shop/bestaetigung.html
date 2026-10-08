@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Bestellung bestätigt – Glass Skin Shop</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&family=Inter:wght@400;500;600&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--side:#fbf4f4;--line:#e3d6d8;--ink:#1c1b1d;--muted:#6f6469;--rose:#b0657a;--ok:#2e7d5b}
+*{box-sizing:border-box;margin:0}
+body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:#fff;line-height:1.5;font-size:14.5px}
+.testbar{background:#fff4d6;border-bottom:1px solid #ecd48a;color:#5c4510;font-size:.8rem;padding:8px 16px;text-align:center}
+.wrap{max-width:640px;margin:0 auto;padding:28px 20px 60px}
+.logo{font-family:"Playfair Display",Georgia,serif;font-weight:700;font-size:1.55rem;text-decoration:none;color:var(--ink)}
+.logo span{color:var(--rose)}
+.hero{display:flex;gap:16px;align-items:center;margin:30px 0 22px}
+.tick{width:54px;height:54px;border-radius:50%;border:2px solid var(--ok);color:var(--ok);display:grid;place-items:center;font-size:1.6rem;flex:none}
+.hero small{color:var(--muted);display:block}
+.hero h1{font-size:1.5rem;font-weight:600;line-height:1.25}
+.card{border:1px solid var(--line);border-radius:8px;margin-bottom:14px}
+.card h2{font-size:1rem;font-weight:600;padding:16px 18px 4px}
+.card .b{padding:8px 18px 16px}
+.items{display:flex;gap:14px;align-items:center}
+.thumb{position:relative;width:62px;height:62px;border:1px solid var(--line);border-radius:8px;flex:none}
+.thumb img{width:100%;height:100%;object-fit:cover;border-radius:7px}
+.thumb b{position:absolute;top:-8px;right:-8px;min-width:22px;height:22px;border-radius:99px;background:rgba(60,50,55,.85);color:#fff;font-size:.75rem;display:grid;place-items:center}
+.row{display:flex;justify-content:space-between;gap:12px;margin:7px 0;font-size:.92rem}
+.row.t{border-top:1px solid var(--line);padding-top:12px;margin-top:12px;font-weight:600;font-size:1.1rem}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cols .card{margin:0}
+.cols p{font-size:.9rem;color:#3d3439}
+.cols h3{font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px;font-weight:600}
+.hand{font-family:Caveat,cursive;color:var(--rose);font-size:1.7rem;text-align:center;margin:26px 0 14px}
+a.btn{display:block;text-align:center;background:var(--rose);color:#fff;text-decoration:none;font-weight:600;border-radius:6px;padding:15px}
+.test{background:#fff4d6;border:1px solid #ecd48a;border-radius:8px;padding:12px 16px;font-size:.85rem;color:#5c4510;margin-top:16px}
+@media(max-width:560px){.cols{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="testbar"><b>Test-Checkout:</b> Das war eine Testbestellung – es wurde nichts bezahlt.</div>
+<div class="wrap" id="root"></div>
+<script>
+(function(){
+  var root=document.getElementById('root');
+  var eur=function(c){return (c/100).toFixed(2).replace('.',',')+' €'};
+  var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
+  var o=null; try{ o=JSON.parse(sessionStorage.getItem('gs-order-v1')); }catch(e){}
+  var head='<a class="logo" href="/shop/">Glass<span>Skin</span> Shop</a>';
+  if(!o||!o.no){
+    root.innerHTML=head+'<div class="hero"><div><h1>Keine Bestellung gefunden</h1><small>Diese Seite zeigt die Bestätigung deiner letzten Testbestellung.</small></div></div><a class="btn" href="/shop/">Zurück zum Shop</a>';
+    return;
+  }
+  var shipName=o.shipMethod==='exp'?'Expressversand (1–2 Werktage)':'Standardversand (2–4 Werktage)';
+  var first=esc(o.name.split(' ')[0]);
+  root.innerHTML=head+
+   '<div class="hero"><div class="tick">✓</div><div><small>Bestellung '+esc(o.no)+'</small><h1>Danke, '+first+'!</h1></div></div>'+
+   '<div class="card"><h2>Deine Bestellung ist bestätigt</h2><div class="b"><p style="color:var(--muted)">Eine Bestätigung geht an <b style="color:var(--ink)">'+esc(o.email)+'</b>. (Im Test wird keine E-Mail verschickt.)</p></div></div>'+
+   '<div class="card"><h2>Bestellübersicht</h2><div class="b">'+
+     '<div class="items"><div class="thumb"><img src="/shop/serum-produkt.jpg" alt=""><b>'+o.qty+'</b></div><div style="flex:1;font-weight:500">Anua Peach 70 Niacin Serum<br><small style="color:var(--muted);font-weight:400">30 ml</small></div><div>'+eur(o.sub)+'</div></div>'+
+     '<div style="height:12px"></div>'+
+     '<div class="row"><span>Zwischensumme</span><span>'+eur(o.sub)+'</span></div>'+
+     (o.disc?'<div class="row"><span>Rabatt</span><span style="color:var(--ok)">−'+eur(o.disc)+'</span></div>':'')+
+     '<div class="row"><span>Versand</span><span>'+(o.ship?eur(o.ship):'Gratis')+'</span></div>'+
+     '<div class="row t"><span>Gesamt</span><span>'+eur(o.total)+'</span></div>'+
+   '</div></div>'+
+   '<div class="cols">'+
+     '<div class="card"><div class="b"><h3>Lieferadresse</h3><p>'+esc(o.name)+'<br>'+o.addr.map(esc).join('<br>')+'</p></div></div>'+
+     '<div class="card"><div class="b"><h3>Zahlung</h3><p>'+esc(o.payLabel)+'<br>'+eur(o.total)+'</p><h3 style="margin-top:12px">Versandart</h3><p>'+shipName+'</p></div></div>'+
+   '</div>'+
+   '<p class="hand">Dein Glow ist unterwegs ♡</p><a class="btn" href="/shop/">Weiter einkaufen</a>'+
+   '<div class="test">Hinweis: Dies ist ein Test-Checkout. Es wurde nichts bezahlt, nichts an einen Server gesendet und keine Kartendaten gespeichert.</div>';
+})();
+</script>
+</body>
+</html>

@@ -135,11 +135,7 @@ footer.site nav{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;colo
 .bar{height:6px;border-radius:9px;background:var(--line);overflow:hidden;margin-bottom:6px}
 .bar i{display:block;height:100%;background:var(--rose);width:0;transition:.3s}
 
-.terms{display:flex;gap:10px;align-items:flex-start;font-size:.8rem;color:var(--muted);margin:0 0 14px;line-height:1.45}
-.terms input{margin-top:3px;accent-color:var(--rose-d);width:16px;height:16px;flex:none}
-.terms a{color:var(--rose-d)}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.btn:disabled:hover{background:var(--rose-d)}
+a.btn{display:block;text-align:center;text-decoration:none}
 .pay{font-size:.74rem;color:var(--muted);text-align:center;margin-top:10px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,30px);background:var(--ink);color:#fff;padding:12px 22px;border-radius:99px;font-size:.9rem;opacity:0;transition:.25s;z-index:70;pointer-events:none}
 .toast.show{opacity:1;transform:translate(-50%,0)}
@@ -303,7 +299,7 @@ footer.site nav{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;colo
   var PRODUCT = {id:'peach70', name:'Anua Peach 70 Niacin Serum', sub:'30 ml', price:21.90, img:'/shop/serum-produkt.jpg'};
   var FREE_FROM = 40, SHIPPING = 3.90, KEY = 'gs-cart-v1';
   var cart = load();
-  var qty = 1, agb = false, busy = false;
+  var qty = 1;
   var $ = function(s){return document.querySelector(s)};
   var eur = function(n){return n.toFixed(2).replace('.',',')+' €'};
 
@@ -343,9 +339,8 @@ footer.site nav{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;colo
       '<div class="row"><span>Zwischensumme</span><span>'+eur(t.sub)+'</span></div>'+
       '<div class="row"><span>Versand</span><span>'+(t.ship?eur(t.ship):'gratis')+'</span></div>'+
       '<div class="row t"><span>Gesamt (inkl. MwSt.)</span><span>'+eur(t.total)+'</span></div>'+
-      '<label class="terms"><input type="checkbox" id="agb"'+(agb?' checked':'')+'><span>Ich habe die <a href="#" target="_blank">AGB</a>, die <a href="#" target="_blank">Widerrufsbelehrung</a> und die <a href="#" target="_blank">Datenschutzerklärung</a> gelesen und akzeptiere sie.</span></label>'+
-      '<button class="btn" id="checkout"'+(agb&&!busy?'':' disabled')+'>'+(busy?'Einen Moment …':'Weiter zur Zahlung')+'</button>'+
-      '<div class="pay">🔒 Sichere Zahlung über Stripe · Karte, PayPal, Klarna, SEPA, Apple Pay</div>';
+      '<a class="btn" href="/shop/checkout.html">Zur Kasse</a>'+
+      '<div class="pay">🔒 Sichere Zahlung · Karte, PayPal, Klarna, SEPA</div>';
   }
 
   function setQty(n){ qty=Math.max(1,Math.min(10,n)); $('#qty').textContent=qty; }
@@ -368,9 +363,6 @@ footer.site nav{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;colo
     else if(b.dataset.d) cart.qty=Math.max(0,Math.min(10,cart.qty+Number(b.dataset.d)));
     save(); render();
   });
-  $('#sum').addEventListener('change',function(e){ if(e.target.id==='agb'){ agb=e.target.checked; $('#checkout').disabled=!agb||busy; } });
-  $('#sum').addEventListener('click',function(e){ if(e.target.id==='checkout') checkout(); });
-
   document.querySelectorAll('.thumbs button').forEach(function(b){
     b.onclick=function(){
       $('#mainImg').src=b.dataset.src;
@@ -378,19 +370,6 @@ footer.site nav{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;colo
       b.classList.add('on');
     };
   });
-
-  /* Checkout: Menge an den Server schicken, der legt die Stripe-Session an (Preis wird dort berechnet) */
-  function checkout(){
-    if(cart.qty===0||!agb||busy) return;
-    busy=true; render();
-    fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({qty:cart.qty})})
-      .then(function(r){return r.json().then(function(d){if(!r.ok||!d.url)throw d;return d})})
-      .then(function(d){ window.location.href=d.url; })
-      .catch(function(e){ busy=false; render(); toast((e&&e.error)||'Zahlung konnte nicht gestartet werden.'); });
-  }
-  // Zurück von Stripe (Browser-Zurück-Taste): Button wieder freigeben
-  window.addEventListener('pageshow',function(e){ if(e.persisted){ busy=false; render(); } });
-  if(/[?&]abgebrochen=1/.test(location.search)){ history.replaceState(null,'','/shop/'); setTimeout(function(){toast('Zahlung abgebrochen – dein Warenkorb ist noch da.'); if(cart.qty) openCart();},300); }
 
   render();
 })();
