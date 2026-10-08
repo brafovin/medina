@@ -28,7 +28,7 @@ a.btn{display:inline-block;background:var(--rose-d);color:#fff;text-decoration:n
   var eur=function(c,cur){return (c/100).toLocaleString('de-DE',{style:'currency',currency:(cur||'eur').toUpperCase()})};
   function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
   function show(emoji,title,body,extra){
-    box.innerHTML='<div class="big">'+emoji+'</div><h1>'+title+'</h1>'+body+(extra||'')+'<a class="btn" href="/">Zurück zum Shop</a>';
+    box.innerHTML='<div class="big">'+emoji+'</div><h1>'+title+'</h1>'+body+(extra||'')+'<a class="btn" href="/shop/">Zurück zum Shop</a>';
   }
   if(!id){ show('🍑','Hier gibt es nichts zu sehen','<p>Diese Seite gehört zu einer abgeschlossenen Bestellung.</p>'); return; }
   fetch('/api/order?session_id='+encodeURIComponent(id)).then(function(r){return r.json().then(function(d){if(!r.ok)throw d;return d})}).then(function(o){

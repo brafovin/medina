@@ -55,12 +55,14 @@ mock.listen(0, async function () {
     const t = function (name, fn) { return Promise.resolve().then(fn).then(function () { ok++; console.log('✓', name); }); };
     try {
       await t('Startseite und Danke-Seite werden ausgeliefert', async function () {
-        assert.strictEqual((await req(port, 'GET', '/')).status, 200);
-        assert.strictEqual((await req(port, 'GET', '/danke.html')).status, 200);
+        assert.strictEqual((await req(port, 'GET', '/shop/')).status, 200);
+        assert.strictEqual((await req(port, 'GET', '/shop/danke.html')).status, 200);
+        assert.strictEqual((await req(port, 'GET', '/shop/serum.jpg')).status, 200);
+        assert.strictEqual((await req(port, 'GET', '/shop')).status, 302);
       });
 
       await t('Quellcode, .env und Pfad-Tricks werden nicht ausgeliefert', async function () {
-        for (const p of ['/../server.js', '/..%2Fserver.js', '/%2e%2e/.env', '/server.js', '/.env', '/data/orders.jsonl']) {
+        for (const p of ['/../server.js', '/..%2Fserver.js', '/%2e%2e/.env', '/server.js', '/.env', '/shop/server.js', '/shop/core.js', '/shop/.env', '/shop/data/orders.jsonl', '/shop/../core.js', '/shop/package.json']) {
           const r = await req(port, 'GET', p);
           assert.ok(r.status === 403 || r.status === 404, p + ' → ' + r.status);
           assert.ok(!/STRIPE_SECRET_KEY|createServer/.test(r.body), p + ' leakt Inhalt');
@@ -77,8 +79,8 @@ mock.listen(0, async function () {
         assert.strictEqual(c.params['line_items[0][price_data][unit_amount]'], '2190');
         assert.strictEqual(c.params['line_items[0][quantity]'], '1');
         assert.strictEqual(c.params['shipping_options[0][shipping_rate_data][fixed_amount][amount]'], '390');
-        assert.strictEqual(c.params.success_url, 'https://shop.example.com/danke.html?session_id={CHECKOUT_SESSION_ID}');
-        assert.strictEqual(c.params.cancel_url, 'https://shop.example.com/?abgebrochen=1');
+        assert.strictEqual(c.params.success_url, 'https://shop.example.com/shop/danke.html?session_id={CHECKOUT_SESSION_ID}');
+        assert.strictEqual(c.params.cancel_url, 'https://shop.example.com/shop/?abgebrochen=1');
         assert.strictEqual(c.params.mode, 'payment');
         assert.strictEqual(c.params['shipping_address_collection[allowed_countries][0]'], 'DE');
       });
@@ -130,6 +132,49 @@ mock.listen(0, async function () {
         assert.deepStrictEqual(JSON.parse(r.body), { paid: true, pending: false, email: 'kundin@example.com', qty: 2, amount_total: 4380, currency: 'eur' });
         assert.strictEqual((await req(port, 'GET', '/api/order?session_id=../../v1/account')).status, 400);
         assert.strictEqual((await req(port, 'GET', '/api/order')).status, 400);
+      });
+
+
+      await t('Vercel-Funktionen (api/*.js) verhalten sich wie der lokale Server', async function () {
+        // Bildet Vercels Laufzeit nach: req.body (geparstes JSON), req.query, res.status().json()
+        const vercel = http.createServer(async function (rq, rs) {
+          const u = new URL(rq.url, 'http://x');
+          const name = u.pathname.replace('/api/', '');
+          rs.status = function (c) { rs.statusCode = c; return rs; };
+          rs.json = function (o) { rs.setHeader('Content-Type', 'application/json'); rs.end(JSON.stringify(o)); return rs; };
+          rs.send = function (b) { rs.end(b); return rs; };
+          rq.query = Object.fromEntries(u.searchParams);
+          const handler = require('../../api/' + name + '.js');
+          if (name !== 'webhook') {
+            let b = ''; for await (const c of rq) b += c;
+            try { rq.body = b ? JSON.parse(b) : {}; } catch (e) { rq.body = b; }
+          }
+          try { await handler(rq, rs); } catch (e) { rs.statusCode = 500; rs.end(String(e)); }
+        });
+        await new Promise(function (r) { vercel.listen(0, r); });
+        const vp = vercel.address().port;
+        try {
+          assert.strictEqual(require('../../api/webhook.js').config.api.bodyParser, false);
+          calls.length = 0;
+          const r = await json(vp, '/api/checkout', { qty: 1 });
+          assert.strictEqual(r.status, 200);
+          assert.strictEqual(JSON.parse(r.body).url, 'https://checkout.stripe.test/pay/cs_test_abcdefghij');
+          assert.strictEqual(calls[0].params['line_items[0][price_data][unit_amount]'], '2190');
+          assert.strictEqual((await json(vp, '/api/checkout', { qty: 99 })).status, 400);
+          assert.strictEqual((await req(vp, 'GET', '/api/checkout')).status, 405);
+          assert.strictEqual(JSON.parse((await req(vp, 'GET', '/api/order?session_id=cs_test_abcdefghij')).body).paid, true);
+
+          // Webhook: Auf Vercel wird nicht in eine Datei geschrieben, sondern geloggt.
+          process.env.VERCEL = '1';
+          const log = console.log; const logged = [];
+          console.log = function () { logged.push(Array.prototype.join.call(arguments, ' ')); };
+          const body = JSON.stringify({ type: 'checkout.session.completed', data: { object: { id: 'cs_test_vercel0001', payment_status: 'paid', amount_total: 2190 + 390, currency: 'eur', metadata: { qty: '1' }, customer_details: { email: 'v@example.com' } } } });
+          let w;
+          try { w = await req(vp, 'POST', '/api/webhook', body, { 'Stripe-Signature': sign(body) }); } finally { console.log = log; delete process.env.VERCEL; }
+          assert.strictEqual(w.status, 200);
+          assert.ok(logged.some(function (l) { return l.indexOf('NEUE BESTELLUNG') === 0 && l.indexOf('cs_test_vercel0001') > 0; }));
+          assert.strictEqual((await req(vp, 'POST', '/api/webhook', body, { 'Stripe-Signature': 't=1,v1=bad' })).status, 400);
+        } finally { vercel.close(); }
       });
 
       console.log('\n' + ok + ' Tests bestanden');
