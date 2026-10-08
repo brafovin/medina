@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Korean Glass Skin – Anua Peach 70 Niacin Serum</title>
+<meta name="description" content="Anua Peach 70 Niacin Serum, 30 ml – 70 % Pfirsich-Extrakt, 5 % Niacinamid und Hyaluronsäure für den Glass Skin Look.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&family=Inter:wght@400;500;600&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fbf1f1; --bg2:#f6e3e5; --card:#fffafa; --line:#efd3d7;
+  --rose:#c9808f; --rose-d:#b0657a; --rose-l:#f3cfd5;
+  --ink:#16161a; --navy:#1f2a44; --muted:#6c6168;
+  --serif:"Playfair Display",Georgia,"Times New Roman",serif;
+  --hand:"Caveat","Segoe Script","Bradley Hand",cursive;
+  --sans:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
+img{max-width:100%;display:block}
+a{color:inherit}
+button{font:inherit;cursor:pointer}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+.eyebrow{font-size:.75rem;letter-spacing:.22em;text-transform:uppercase;font-weight:600}
+.hand{font-family:var(--hand);color:var(--rose)}
+
+/* Topbar + Header */
+.topbar{background:var(--rose-d);color:#fff;text-align:center;font-size:.8rem;padding:7px 12px;letter-spacing:.04em}
+header.site{position:sticky;top:0;z-index:30;background:rgba(251,241,241,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+header.site .wrap{display:flex;align-items:center;justify-content:space-between;height:64px;gap:16px}
+.logo{font-family:var(--serif);font-weight:700;font-size:1.25rem;text-decoration:none;white-space:nowrap}
+.logo span{color:var(--rose)}
+nav.main{display:flex;gap:26px;font-size:.9rem}
+nav.main a{text-decoration:none;color:var(--muted)}
+nav.main a:hover{color:var(--rose-d)}
+.cart-btn{position:relative;background:var(--ink);color:#fff;border:0;border-radius:99px;padding:9px 18px;font-size:.88rem;font-weight:500;display:flex;gap:8px;align-items:center}
+.cart-btn .count{background:var(--rose);border-radius:99px;min-width:20px;height:20px;font-size:.72rem;display:grid;place-items:center;padding:0 5px}
+
+/* Hero */
+.hero{text-align:center;padding:56px 0 36px;position:relative;overflow:hidden}
+.hero .kr{position:absolute;left:22px;top:46px;writing-mode:vertical-rl;color:var(--rose);font-size:1.7rem;letter-spacing:.35em;opacity:.8}
+.hero .stamp{position:absolute;right:20px;top:34px;transform:rotate(-7deg);background:var(--rose-l);padding:18px 26px;border-radius:50% 40% 55% 45%/55% 50% 50% 45%;font-family:var(--hand);font-size:1.35rem;line-height:1.2;color:var(--rose-d);max-width:230px}
+.hero h1{font-family:var(--serif);font-weight:500;font-size:clamp(2.6rem,8vw,5.4rem);line-height:1.05;letter-spacing:-.02em}
+.hero h1 .heart{color:var(--rose);font-size:.45em;vertical-align:top}
+.hero .tag{font-family:var(--hand);color:var(--rose);font-size:clamp(1.7rem,4.5vw,2.8rem);margin:6px 0 18px}
+.hero .rule{display:flex;align-items:center;gap:18px;justify-content:center;max-width:760px;margin:0 auto}
+.rule::before,.rule::after{content:"";flex:1;height:1px;background:var(--rose)}
+.hero .rule span{letter-spacing:.2em;font-size:.85rem;text-transform:uppercase}
+
+/* Product */
+.product{display:grid;grid-template-columns:1.05fr 1fr;gap:40px;padding:30px 0 64px;align-items:start}
+.gallery .main{border-radius:18px;overflow:hidden;border:1px solid var(--line);background:var(--bg2);aspect-ratio:1/1.05}
+.gallery .main img{width:100%;height:100%;object-fit:cover}
+.thumbs{display:flex;gap:10px;margin-top:10px}
+.thumbs button{border:2px solid transparent;border-radius:10px;overflow:hidden;width:78px;height:60px;padding:0;background:none}
+.thumbs button.on{border-color:var(--rose)}
+.thumbs img{width:100%;height:100%;object-fit:cover}
+.info .brand{color:var(--rose-d)}
+.info h2{font-family:var(--serif);font-size:clamp(1.8rem,4vw,2.5rem);line-height:1.15;margin:6px 0 10px}
+.stars{color:var(--rose);letter-spacing:2px;font-size:.95rem}
+.stars small{color:var(--muted);letter-spacing:0;margin-left:6px}
+.price{font-size:2rem;font-weight:600;margin:14px 0 2px}
+.price small{font-size:.82rem;color:var(--muted);font-weight:400}
+.lead{margin:14px 0;color:#3b3239}
+.facts{list-style:none;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:6px 18px;margin:18px 0}
+.facts li{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:.93rem}
+.facts li:last-child{border:0}
+.facts b{font-weight:600}
+.buy{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}
+.qty{display:flex;align-items:center;border:1.5px solid var(--line);background:var(--card);border-radius:99px}
+.qty button{width:44px;height:48px;border:0;background:none;font-size:1.3rem;color:var(--rose-d)}
+.qty output{min-width:30px;text-align:center;font-weight:600}
+.btn{border:0;border-radius:99px;padding:14px 28px;font-weight:600;font-size:1rem;background:var(--rose-d);color:#fff;transition:.15s}
+.btn:hover{background:var(--ink)}
+.btn.grow{flex:1;min-width:200px}
+.btn.ghost{background:none;color:var(--ink);border:1.5px solid var(--ink)}
+.btn.ghost:hover{background:var(--ink);color:#fff}
+.perks{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:16px;font-size:.84rem;color:var(--muted)}
+.perks span::before{content:"✓ ";color:var(--rose-d);font-weight:700}
+
+/* Sections */
+section.block{padding:56px 0}
+section.alt{background:var(--bg2)}
+.sec-title{text-align:center;margin-bottom:34px}
+.sec-title h2{font-family:var(--serif);font-size:clamp(1.7rem,4vw,2.4rem);font-weight:500}
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
+.ing{display:flex;gap:16px}
+.ing .ico{flex:0 0 64px;height:64px;border-radius:50%;background:var(--rose-l);display:grid;place-items:center;font-size:1.8rem}
+.ing h3{font-size:1.05rem;color:var(--navy);margin-bottom:4px}
+.ing ul{padding-left:18px;font-size:.9rem;color:#4a4048}
+.benefits{list-style:none;display:grid;grid-template-columns:repeat(2,1fr);gap:14px 28px;max-width:820px;margin:0 auto}
+.benefits li{display:flex;gap:12px;align-items:flex-start}
+.benefits li::before{content:"✓";flex:0 0 26px;height:26px;border-radius:50%;background:var(--rose);color:#fff;display:grid;place-items:center;font-size:.8rem;font-weight:700;margin-top:2px}
+.note{text-align:center;margin-top:30px;font-family:var(--hand);font-size:1.7rem;color:var(--rose-d)}
+.steps{list-style:none;counter-reset:s;display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.steps li{counter-increment:s;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 18px}
+.steps li::before{content:counter(s);display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--rose);color:#fff;font-weight:600;margin-bottom:12px}
+.fazit{max-width:720px;margin:0 auto;text-align:center}
+.fazit p{font-size:1.1rem;color:#3b3239}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 20px;max-width:760px;margin:0 auto 10px}
+summary{font-weight:600;cursor:pointer}
+details p{margin-top:10px;color:#4a4048;font-size:.95rem}
+
+footer.site{border-top:1px solid var(--line);padding:30px 0 40px;text-align:center;font-size:.8rem}
+footer.site .eyebrow{color:var(--muted);margin-bottom:10px}
+footer.site nav{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;color:var(--muted)}
+
+/* Drawer + Modal */
+.overlay{position:fixed;inset:0;background:rgba(22,22,26,.45);opacity:0;pointer-events:none;transition:.2s;z-index:40}
+.overlay.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:0;height:100%;width:min(420px,100%);background:var(--bg);z-index:50;transform:translateX(100%);transition:.25s;display:flex;flex-direction:column;box-shadow:-10px 0 40px rgba(0,0,0,.12)}
+.drawer.open{transform:none}
+.drawer header{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--line)}
+.drawer h3{font-family:var(--serif);font-size:1.3rem}
+.x{background:none;border:0;font-size:1.6rem;line-height:1;color:var(--muted)}
+.lines{flex:1;overflow:auto;padding:18px 22px}
+.line{display:grid;grid-template-columns:72px 1fr auto;gap:14px;align-items:center;padding-bottom:16px;margin-bottom:16px;border-bottom:1px solid var(--line)}
+.line img{width:72px;height:72px;object-fit:cover;border-radius:10px}
+.line .n{font-weight:600;font-size:.95rem;line-height:1.3}
+.line .s{font-size:.8rem;color:var(--muted)}
+.line .qty{transform:scale(.8);transform-origin:left;margin-top:4px;width:max-content}
+.line .rm{background:none;border:0;color:var(--muted);font-size:.78rem;text-decoration:underline;margin-top:4px;display:block}
+.empty{text-align:center;color:var(--muted);margin-top:60px}
+.sum{padding:18px 22px;border-top:1px solid var(--line);background:var(--card)}
+.sum .row{display:flex;justify-content:space-between;font-size:.92rem;margin-bottom:6px}
+.sum .row.t{font-weight:600;font-size:1.1rem;margin:10px 0 14px}
+.sum .btn{width:100%}
+.free{font-size:.8rem;color:var(--rose-d);margin-bottom:10px}
+.bar{height:6px;border-radius:9px;background:var(--line);overflow:hidden;margin-bottom:6px}
+.bar i{display:block;height:100%;background:var(--rose);width:0;transition:.3s}
+
+.modal{position:fixed;inset:0;z-index:60;display:none;place-items:center;padding:16px}
+.modal.open{display:grid}
+.modal .box{background:var(--bg);border-radius:20px;max-width:560px;width:100%;max-height:92vh;overflow:auto;padding:28px}
+.modal h3{font-family:var(--serif);font-size:1.5rem;margin-bottom:4px}
+form .f{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+form label{display:grid;gap:4px;font-size:.8rem;font-weight:600}
+form label.w{grid-column:1/-1}
+form input,form select{font:inherit;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff}
+form input:focus,form select:focus{outline:2px solid var(--rose);border-color:transparent}
+.demo{background:var(--rose-l);border-radius:10px;padding:10px 14px;font-size:.8rem;color:var(--navy);margin-bottom:14px}
+.ok{text-align:center;padding:10px 0}
+.ok .big{font-size:3rem}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,30px);background:var(--ink);color:#fff;padding:12px 22px;border-radius:99px;font-size:.9rem;opacity:0;transition:.25s;z-index:70;pointer-events:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media(max-width:860px){
+  nav.main{display:none}
+  .product{grid-template-columns:1fr}
+  .g2,.g3,.steps{grid-template-columns:1fr 1fr}
+  .hero .stamp{display:none}
+  .hero .kr{font-size:1.2rem;left:10px}
+}
+@media(max-width:560px){
+  .g2,.g3,.steps,.benefits{grid-template-columns:1fr}
+  form .f{grid-template-columns:1fr}
+  .btn.grow{min-width:100%}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">Gratis Versand ab 40 € · Original aus Südkorea · 30 Tage Rückgabe</div>
+
+<header class="site">
+  <div class="wrap">
+    <a class="logo" href="#top">Glass<span>Skin</span> Shop</a>
+    <nav class="main">
+      <a href="#produkt">Produkt</a>
+      <a href="#inhaltsstoffe">Inhaltsstoffe</a>
+      <a href="#vorteile">Vorteile</a>
+      <a href="#anwendung">Anwendung</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <button class="cart-btn" id="openCart" aria-label="Warenkorb öffnen">🛍 Warenkorb <span class="count" id="count">0</span></button>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="kr" aria-hidden="true">유리피부</div>
+    <div class="stamp">Strahlende Haut ist kein Filter – sondern Pflege. ♡</div>
+    <div class="wrap">
+      <h1>Korean Glass Skin <span class="heart">♡</span></h1>
+      <p class="tag">Glow. Hydration. Healthy Skin.</p>
+      <div class="rule"><span>Das Beauty-Geheimnis aus Korea</span></div>
+    </div>
+  </section>
+
+  <section class="wrap product" id="produkt">
+    <div class="gallery">
+      <div class="main"><img id="mainImg" src="serum-produkt.jpg" alt="Anua Peach 70 Niacin Serum, 30 ml, mit Pfirsich"></div>
+      <div class="thumbs">
+        <button class="on" data-src="serum-produkt.jpg" aria-label="Produktbild 1"><img src="serum-produkt.jpg" alt=""></button>
+        <button data-src="serum.jpg" aria-label="Produktbild 2"><img src="serum.jpg" alt=""></button>
+      </div>
+    </div>
+
+    <div class="info">
+      <div class="eyebrow brand">Anua · Korean Skincare</div>
+      <h2>Peach 70 Niacin Serum</h2>
+      <div class="stars">★★★★★<small>Beliebtes K-Beauty Serum</small></div>
+      <div class="price">21,90 € <small>inkl. MwSt. · 30 ml · 73,00 € / 100 ml</small></div>
+      <p class="lead">Das beliebte koreanische Serum für den Glass Skin Look: Pfirsich-Extrakt und Niacinamid lassen die Haut aufhellen, beruhigen und versorgen sie intensiv mit Feuchtigkeit.</p>
+
+      <ul class="facts">
+        <li><span>Name</span><b>Anua Peach 70 Niacin Serum</b></li>
+        <li><span>Marke</span><b>Anua (Korean Skincare)</b></li>
+        <li><span>Herkunft</span><b>Südkorea</b></li>
+        <li><span>Inhalt</span><b>30 ml</b></li>
+        <li><span>Produktart</span><b>Serum</b></li>
+      </ul>
+
+      <div class="buy">
+        <div class="qty">
+          <button type="button" id="minus" aria-label="Weniger">−</button>
+          <output id="qty">1</output>
+          <button type="button" id="plus" aria-label="Mehr">+</button>
+        </div>
+        <button class="btn grow" id="add">In den Warenkorb</button>
+      </div>
+      <div class="perks"><span>Für alle Hauttypen</span><span>Auch empfindliche Haut</span><span>Leichte Textur</span></div>
+    </div>
+  </section>
+
+  <section class="block alt" id="inhaltsstoffe">
+    <div class="wrap">
+      <div class="sec-title"><h2>Hauptinhaltsstoffe &amp; Wirkung</h2></div>
+      <div class="grid g2">
+        <div class="card ing"><div class="ico">🍑</div><div><h3>Pfirsich-Extrakt (70 %)</h3><ul><li>spendet Feuchtigkeit</li><li>wirkt antioxidativ</li><li>macht die Haut weich und geschmeidig</li></ul></div></div>
+        <div class="card ing"><div class="ico">💧</div><div><h3>Niacinamid (5 %)</h3><ul><li>hellt den Teint auf</li><li>reduziert Rötungen und Pickelmale</li><li>stärkt die Hautbarriere</li></ul></div></div>
+        <div class="card ing"><div class="ico">🌿</div><div><h3>Hyaluronsäure</h3><ul><li>sorgt für intensive Feuchtigkeit</li><li>polstert die Haut auf</li><li>lässt die Haut glatter und praller wirken</li></ul></div></div>
+        <div class="card ing"><div class="ico">🌸</div><div><h3>Weitere pflanzliche Inhaltsstoffe</h3><ul><li>z. B. Centella Asiatica</li><li>beruhigt die Haut</li><li>unterstützt die Regeneration</li></ul></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="vorteile">
+    <div class="wrap">
+      <div class="sec-title"><h2>Vorteile</h2></div>
+      <ul class="benefits">
+        <li>Sorgt für einen natürlichen Glow (Glass Skin Effekt)</li>
+        <li>Spendet intensive Feuchtigkeit</li>
+        <li>Verbessert den Hautton und mindert Pigmentflecken</li>
+        <li>Beruhigt empfindliche Haut</li>
+        <li>Leichte, schnell einziehende Textur</li>
+        <li>Für alle Hauttypen geeignet (auch empfindliche Haut)</li>
+      </ul>
+      <p class="note">Für eine glatte, feine und strahlende Haut – jeden Tag! ♡</p>
+    </div>
+  </section>
+
+  <section class="block alt" id="anwendung">
+    <div class="wrap">
+      <div class="sec-title"><h2>Anwendung</h2></div>
+      <ol class="steps">
+        <li>Gesicht gründlich reinigen (z. B. mit einem milden Cleanser)</li>
+        <li>2–3 Tropfen des Serums auf die Haut auftragen</li>
+        <li>Sanft einklopfen, bis es vollständig eingezogen ist</li>
+        <li>Danach eine Feuchtigkeitscreme verwenden (und tagsüber Sonnenschutz nicht vergessen!)</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap fazit">
+      <div class="sec-title"><h2>Fazit</h2></div>
+      <p>Das Anua Peach 70 Niacin Serum ist ein perfektes Produkt für alle, die sich den koreanischen Glass Skin Look wünschen. Es vereint Feuchtigkeit, Pflege und einen natürlichen Glow – und ist dabei sanft zur Haut. Ein Must-have für jede Skincare-Routine!</p>
+      <p class="hand" style="font-size:2rem;margin:18px 0 22px">Mehr als nur Pflege – es ist ein Lifestyle ♡</p>
+      <button class="btn" id="add2">Jetzt für 21,90 € sichern</button>
+    </div>
+  </section>
+
+  <section class="block alt" id="faq">
+    <div class="wrap">
+      <div class="sec-title"><h2>Häufige Fragen</h2></div>
+      <details><summary>Für welchen Hauttyp ist das Serum geeignet?</summary><p>Für alle Hauttypen, auch für empfindliche Haut. Die Textur ist leicht und zieht schnell ein.</p></details>
+      <details><summary>Wie oft sollte ich es verwenden?</summary><p>Täglich: 2–3 Tropfen nach der Reinigung auf die Haut geben, sanft einklopfen und danach eine Feuchtigkeitscreme auftragen.</p></details>
+      <details><summary>Brauche ich tagsüber Sonnenschutz?</summary><p>Ja, tagsüber sollte Sonnenschutz immer der letzte Pflegeschritt sein.</p></details>
+      <details><summary>Wie lange dauert der Versand?</summary><p>Platzhalter – bitte mit euren echten Versandzeiten ersetzen (z. B. 2–4 Werktage innerhalb Deutschlands).</p></details>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="eyebrow">Korean Skincare ♡ Mehr als nur Pflege – es ist ein Lifestyle</div>
+    <nav><a href="#">Impressum</a><a href="#">Datenschutz</a><a href="#">AGB</a><a href="#">Widerruf</a><a href="#">Versand &amp; Zahlung</a></nav>
+  </div>
+</footer>
+
+<!-- Warenkorb -->
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer" aria-label="Warenkorb" aria-hidden="true">
+  <header><h3>Dein Warenkorb</h3><button class="x" id="closeCart" aria-label="Schließen">×</button></header>
+  <div class="lines" id="lines"></div>
+  <div class="sum" id="sum"></div>
+</aside>
+
+<!-- Checkout -->
+<div class="modal" id="modal" role="dialog" aria-modal="true">
+  <div class="box" id="box"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  var PRODUCT = {id:'peach70', name:'Anua Peach 70 Niacin Serum', sub:'30 ml', price:21.90, img:'serum-produkt.jpg'};
+  var FREE_FROM = 40, SHIPPING = 3.90, KEY = 'gs-cart-v1';
+  var cart = load();
+  var qty = 1;
+  var $ = function(s){return document.querySelector(s)};
+  var eur = function(n){return n.toFixed(2).replace('.',',')+' €'};
+
+  function load(){ try{ var c = JSON.parse(localStorage.getItem(KEY)); return c && typeof c.qty==='number' ? c : {qty:0}; }catch(e){ return {qty:0}; } }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(cart)); }catch(e){} }
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]}); }
+
+  function toast(t){ var el=$('#toast'); el.textContent=t; el.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(function(){el.classList.remove('show')},2200); }
+
+  function openCart(){ $('#drawer').classList.add('open'); $('#overlay').classList.add('open'); $('#drawer').setAttribute('aria-hidden','false'); }
+  function closeCart(){ $('#drawer').classList.remove('open'); $('#overlay').classList.remove('open'); $('#drawer').setAttribute('aria-hidden','true'); }
+
+  function totals(){
+    var sub = cart.qty*PRODUCT.price;
+    var ship = sub===0 ? 0 : (sub>=FREE_FROM ? 0 : SHIPPING);
+    return {sub:sub, ship:ship, total:sub+ship};
+  }
+
+  function render(){
+    $('#count').textContent = cart.qty;
+    var L = $('#lines'), S = $('#sum');
+    if(cart.qty===0){
+      L.innerHTML = '<div class="empty"><div style="font-size:2.4rem">🍑</div><p>Dein Warenkorb ist noch leer.</p></div>';
+      S.style.display='none'; return;
+    }
+    S.style.display='block';
+    L.innerHTML =
+      '<div class="line"><img src="'+PRODUCT.img+'" alt="">'+
+      '<div><div class="n">'+esc(PRODUCT.name)+'</div><div class="s">'+PRODUCT.sub+' · '+eur(PRODUCT.price)+'</div>'+
+      '<div class="qty"><button data-d="-1" aria-label="Weniger">−</button><output>'+cart.qty+'</output><button data-d="1" aria-label="Mehr">+</button></div>'+
+      '<button class="rm" data-rm>Entfernen</button></div>'+
+      '<b>'+eur(cart.qty*PRODUCT.price)+'</b></div>';
+    var t = totals(), pct = Math.min(100, t.sub/FREE_FROM*100);
+    var hint = t.sub>=FREE_FROM ? 'Du bekommst gratis Versand! 🎉' : 'Noch '+eur(FREE_FROM-t.sub)+' bis zum Gratis-Versand';
+    S.innerHTML =
+      '<div class="free">'+hint+'</div><div class="bar"><i style="width:'+pct+'%"></i></div><div style="height:8px"></div>'+
+      '<div class="row"><span>Zwischensumme</span><span>'+eur(t.sub)+'</span></div>'+
+      '<div class="row"><span>Versand</span><span>'+(t.ship?eur(t.ship):'gratis')+'</span></div>'+
+      '<div class="row t"><span>Gesamt (inkl. MwSt.)</span><span>'+eur(t.total)+'</span></div>'+
+      '<button class="btn" id="checkout">Zur Kasse</button>';
+  }
+
+  function setQty(n){ qty=Math.max(1,Math.min(10,n)); $('#qty').textContent=qty; }
+  function add(){
+    cart.qty = Math.min(10, cart.qty+qty); save(); render(); openCart(); toast('Zum Warenkorb hinzugefügt ♡');
+  }
+
+  $('#plus').onclick=function(){setQty(qty+1)};
+  $('#minus').onclick=function(){setQty(qty-1)};
+  $('#add').onclick=add;
+  $('#add2').onclick=add;
+  $('#openCart').onclick=openCart;
+  $('#closeCart').onclick=closeCart;
+  $('#overlay').onclick=function(){ closeCart(); closeModal(); };
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ closeCart(); closeModal(); } });
+
+  $('#lines').addEventListener('click',function(e){
+    var b=e.target.closest('button'); if(!b) return;
+    if(b.hasAttribute('data-rm')) cart.qty=0;
+    else if(b.dataset.d) cart.qty=Math.max(0,Math.min(10,cart.qty+Number(b.dataset.d)));
+    save(); render();
+  });
+  $('#sum').addEventListener('click',function(e){ if(e.target.id==='checkout'){ closeCart(); openCheckout(); } });
+
+  document.querySelectorAll('.thumbs button').forEach(function(b){
+    b.onclick=function(){
+      $('#mainImg').src=b.dataset.src;
+      document.querySelectorAll('.thumbs button').forEach(function(x){x.classList.remove('on')});
+      b.classList.add('on');
+    };
+  });
+
+  /* Checkout (Demo – keine echte Zahlung) */
+  function openModal(html){ $('#box').innerHTML=html; $('#modal').classList.add('open'); $('#overlay').classList.add('open'); }
+  function closeModal(){ $('#modal').classList.remove('open'); if(!$('#drawer').classList.contains('open')) $('#overlay').classList.remove('open'); }
+  $('#modal').addEventListener('click',function(e){ if(e.target.id==='modal') closeModal(); });
+
+  function openCheckout(){
+    if(cart.qty===0) return;
+    var t=totals();
+    openModal(
+      '<div style="display:flex;justify-content:space-between;align-items:start"><div><h3>Kasse</h3><p style="font-size:.85rem;color:var(--muted)">'+cart.qty+' × '+esc(PRODUCT.name)+' · Gesamt '+eur(t.total)+'</p></div><button class="x" data-close aria-label="Schließen">×</button></div>'+
+      '<form id="co" novalidate><div class="f">'+
+      '<label>Vorname<input name="vn" required autocomplete="given-name"></label>'+
+      '<label>Nachname<input name="nn" required autocomplete="family-name"></label>'+
+      '<label class="w">E-Mail<input name="mail" type="email" required autocomplete="email"></label>'+
+      '<label class="w">Straße &amp; Hausnummer<input name="str" required autocomplete="street-address"></label>'+
+      '<label>PLZ<input name="plz" required inputmode="numeric" pattern="[0-9]{5}" autocomplete="postal-code"></label>'+
+      '<label>Ort<input name="ort" required autocomplete="address-level2"></label>'+
+      '<label class="w">Zahlungsart<select name="pay"><option>Rechnung</option><option>PayPal</option><option>Kreditkarte</option><option>Vorkasse</option></select></label>'+
+      '</div>'+
+      '<div class="demo">Demo-Modus: Es wird keine echte Bestellung ausgelöst und nichts bezahlt. Eine Zahlungsanbindung (z. B. Stripe, PayPal) fehlt noch.</div>'+
+      '<button class="btn" style="width:100%" type="submit">Bestellung abschicken (Demo)</button></form>'
+    );
+    $('#co').addEventListener('submit',function(e){
+      e.preventDefault();
+      var f=e.target, bad=false;
+      f.querySelectorAll('[required]').forEach(function(i){
+        var ok = i.value.trim() && (!i.pattern || new RegExp('^'+i.pattern+'$').test(i.value.trim())) && (i.type!=='email' || /^\S+@\S+\.\S+$/.test(i.value.trim()));
+        i.style.borderColor = ok ? '' : '#d33'; if(!ok) bad=true;
+      });
+      if(bad){ toast('Bitte alle Felder korrekt ausfüllen'); return; }
+      var nr='GS-'+Date.now().toString(36).toUpperCase().slice(-6);
+      cart.qty=0; save(); render();
+      $('#box').innerHTML='<div class="ok"><div class="big">🍑</div><h3>Danke für deine Bestellung!</h3><p style="margin:10px 0 18px;color:var(--muted)">Bestellnummer '+nr+' (Demo). Dein Glow ist unterwegs ♡</p><button class="btn" data-close>Weiter stöbern</button></div>';
+    });
+  }
+  $('#box').addEventListener('click',function(e){ if(e.target.closest('[data-close]')) closeModal(); });
+
+  render();
+})();
+</script>
+</body>
+</html>
