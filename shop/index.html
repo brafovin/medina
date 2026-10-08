@@ -188,10 +188,10 @@ footer.site nav{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;colo
 
   <section class="wrap product" id="produkt">
     <div class="gallery">
-      <div class="main"><img id="mainImg" src="serum-produkt.jpg" alt="Anua Peach 70 Niacin Serum, 30 ml, mit Pfirsich"></div>
+      <div class="main"><img id="mainImg" src="/shop/serum-produkt.jpg" alt="Anua Peach 70 Niacin Serum, 30 ml, mit Pfirsich"></div>
       <div class="thumbs">
-        <button class="on" data-src="serum-produkt.jpg" aria-label="Produktbild 1"><img src="serum-produkt.jpg" alt=""></button>
-        <button data-src="serum.jpg" aria-label="Produktbild 2"><img src="serum.jpg" alt=""></button>
+        <button class="on" data-src="/shop/serum-produkt.jpg" aria-label="Produktbild 1"><img src="/shop/serum-produkt.jpg" alt=""></button>
+        <button data-src="/shop/serum.jpg" aria-label="Produktbild 2"><img src="/shop/serum.jpg" alt=""></button>
       </div>
     </div>
 
@@ -300,7 +300,7 @@ footer.site nav{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;colo
 
 <script>
 (function(){
-  var PRODUCT = {id:'peach70', name:'Anua Peach 70 Niacin Serum', sub:'30 ml', price:21.90, img:'serum-produkt.jpg'};
+  var PRODUCT = {id:'peach70', name:'Anua Peach 70 Niacin Serum', sub:'30 ml', price:21.90, img:'/shop/serum-produkt.jpg'};
   var FREE_FROM = 40, SHIPPING = 3.90, KEY = 'gs-cart-v1';
   var cart = load();
   var qty = 1, agb = false, busy = false;
@@ -390,7 +390,7 @@ footer.site nav{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;colo
   }
   // Zurück von Stripe (Browser-Zurück-Taste): Button wieder freigeben
   window.addEventListener('pageshow',function(e){ if(e.persisted){ busy=false; render(); } });
-  if(/[?&]abgebrochen=1/.test(location.search)){ history.replaceState(null,'','/'); setTimeout(function(){toast('Zahlung abgebrochen – dein Warenkorb ist noch da.'); if(cart.qty) openCart();},300); }
+  if(/[?&]abgebrochen=1/.test(location.search)){ history.replaceState(null,'','/shop/'); setTimeout(function(){toast('Zahlung abgebrochen – dein Warenkorb ist noch da.'); if(cart.qty) openCart();},300); }
 
   render();
 })();

@@ -5,6 +5,7 @@
       "has": [{ "type": "host", "value": "medina-shop.*" }],
       "destination": "/shop/",
       "permanent": false
-    }
+    },
+    { "source": "/shop", "destination": "/shop/", "permanent": false }
   ]
 }
