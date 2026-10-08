@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Danke für deine Bestellung – Glass Skin Shop</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&family=Inter:wght@400;600&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fbf1f1;--card:#fffafa;--line:#efd3d7;--rose:#c9808f;--rose-d:#b0657a;--ink:#16161a;--muted:#6c6168}
+*{box-sizing:border-box;margin:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:grid;place-items:center;padding:20px;line-height:1.6}
+.box{background:var(--card);border:1px solid var(--line);border-radius:22px;max-width:520px;width:100%;padding:40px 30px;text-align:center}
+.big{font-size:3.2rem}
+h1{font-family:"Playfair Display",Georgia,serif;font-weight:500;font-size:2rem;margin:8px 0}
+.hand{font-family:Caveat,cursive;color:var(--rose);font-size:1.7rem}
+p{color:var(--muted);margin:10px 0}
+.sum{border:1px solid var(--line);border-radius:12px;padding:14px;margin:20px 0;color:var(--ink);font-size:.95rem}
+a.btn{display:inline-block;background:var(--rose-d);color:#fff;text-decoration:none;font-weight:600;border-radius:99px;padding:13px 28px;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="box" id="box"><div class="big">🍑</div><p>Bestellung wird geprüft …</p></div>
+<script>
+(function(){
+  var box=document.getElementById('box');
+  var id=new URLSearchParams(location.search).get('session_id');
+  var eur=function(c,cur){return (c/100).toLocaleString('de-DE',{style:'currency',currency:(cur||'eur').toUpperCase()})};
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function show(emoji,title,body,extra){
+    box.innerHTML='<div class="big">'+emoji+'</div><h1>'+title+'</h1>'+body+(extra||'')+'<a class="btn" href="/">Zurück zum Shop</a>';
+  }
+  if(!id){ show('🍑','Hier gibt es nichts zu sehen','<p>Diese Seite gehört zu einer abgeschlossenen Bestellung.</p>'); return; }
+  fetch('/api/order?session_id='+encodeURIComponent(id)).then(function(r){return r.json().then(function(d){if(!r.ok)throw d;return d})}).then(function(o){
+    if(o.paid||o.pending){
+      try{localStorage.removeItem('gs-cart-v1')}catch(e){}
+      var sum='<div class="sum">'+o.qty+' × Anua Peach 70 Niacin Serum · <b>'+eur(o.amount_total,o.currency)+'</b></div>';
+      var mail=o.email?'<p>Eine Bestätigung geht an <b>'+esc(o.email)+'</b>.</p>':'';
+      if(o.paid) show('🍑','Danke für deine Bestellung!','<p class="hand">Dein Glow ist unterwegs ♡</p>'+sum+mail);
+      else show('⏳','Zahlung wird bearbeitet','<p>Wir warten noch auf die Bestätigung deiner Zahlung. Du bekommst eine E-Mail, sobald sie eingegangen ist.</p>'+sum+mail);
+    } else show('😕','Zahlung nicht abgeschlossen','<p>Es wurde nichts abgebucht. Dein Warenkorb ist noch gefüllt – du kannst es erneut versuchen.</p>');
+  }).catch(function(e){
+    show('😕','Bestellung nicht gefunden','<p>'+esc((e&&e.error)||'Bitte melde dich bei uns, falls du bezahlt hast.')+'</p>');
+  });
+})();
+</script>
+</body>
+</html>
