@@ -21,6 +21,18 @@ Der Checkout ist eine **Attrappe**: Er sieht aus wie ein echter, nimmt aber kein
 - Nach „Bestellen" gibt es eine kurze Ladeanzeige, dann die Bestätigung. Der Warenkorb wird geleert.
 - Gespeichert wird nur die Bestellübersicht (ohne Kartendaten, nur die letzten 4 Ziffern) bis zum Schließen des Tabs.
 
+## Chatbot „Peach"
+
+Unten rechts auf der Produktseite und in der Kasse (`chatbot.js`, eingebunden per `<script>`). Ein **regelbasierter Assistent** ohne Server und ohne KI-Schlüssel:
+
+- Antwortet nur mit Angaben aus der Produktbeschreibung und dem Shop: Serum, Inhaltsstoffe, Hauttypen, Anwendung, Preis, Versand, Zahlung, Rabattcode, Rückgabe.
+- Schnellantworten als Buttons, Eingabefeld, Tippanzeige, Gesprächsverlauf pro Tab, „Neu starten".
+- „In den Warenkorb legen" direkt aus dem Chat.
+- Bei medizinischen Fragen (Schwangerschaft, Allergien, Hauterkrankungen) gibt er keine Beratung und verweist an Fachpersonal. Er sagt offen, dass er ein automatischer Assistent ist.
+- Neue Antworten: in `chatbot.js` im Array `INTENTS` einen Eintrag mit Stichwörtern (`kw`) und Antwort (`a`) ergänzen.
+
+Eine echte KI-Antwort (Claude API) würde einen Server und einen API-Schlüssel brauchen und ist hier bewusst nicht enthalten.
+
 ## Anpassen
 
 Preis, Versandkosten und Rabattcodes stehen oben im Script von `checkout.html` (`PRICE`, `SHIP_STD`, `SHIP_EXP`, `CODES`) und in `index.html` (`PRODUCT`, `FREE_FROM`, `SHIPPING`).
